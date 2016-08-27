@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/card_view"
+    android:layout_gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/beacon_card_margin"
+    card_view:cardElevation="4sp"
+    card_view:cardCornerRadius="4dp">
+
+    <TextView
+        android:id="@+id/text_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/beacon_text_size"
+        android:paddingLeft="@dimen/beacon_card_padding_left_right"
+        android:paddingStart="@dimen/beacon_card_padding_left_right"
+        android:paddingRight="@dimen/beacon_card_padding_left_right"
+        android:paddingEnd="@dimen/beacon_card_padding_left_right"
+        android:paddingTop="@dimen/beacon_card_padding_top_bottom"
+        android:paddingBottom="@dimen/beacon_card_padding_top_bottom"/>
+
+</android.support.v7.widget.CardView>
