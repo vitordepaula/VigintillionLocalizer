@@ -14,7 +14,6 @@ import android.support.v4.app.Fragment;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.UpdateOptions;
 
 import org.bson.Document;
@@ -27,8 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import br.inatel.hackathon.vigintillionlocalizer.database.DB;
 import br.inatel.hackathon.vigintillionlocalizer.model.Beacon;
@@ -54,8 +51,7 @@ public class BluetoothScannerFragment extends Fragment {
     private ArrayList<Beacon> mBeaconList;
     private DB mDb;
     private LatLng mLastLocation = null;
-    private MongoCollection<Document> mMongoCollection = null;
-    private ExecutorService mExecutor;
+    private String mOurScannerId;
 
     private static final ScanSettings SCAN_SETTINGS =
             new ScanSettings.Builder().
@@ -99,7 +95,6 @@ public class BluetoothScannerFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mExecutor = Executors.newSingleThreadExecutor();
         mCallbacks = null;
 
         // SCAN CALLBACK AND SCANNER
@@ -134,13 +129,12 @@ public class BluetoothScannerFragment extends Fragment {
         return null;
     }
 
-    public void stopScanner(){
+    public void stopScanner() {
+        Log.d(TAG, "Stopping scanner");
         btLeScanner.stopScan(scanCallback);
-        mMongoCollection.deleteOne(eq("id", mBtAdapter.getAddress()));
-        mWebServer.stop();
     }
 
-    public boolean setLocation(LatLng location) {
+    public boolean updateLocation(LatLng location) {
         Log.d(TAG, "got location");
         if (mLastLocation == null) {
             if (mBtAdapter == null) {
@@ -149,44 +143,52 @@ public class BluetoothScannerFragment extends Fragment {
             }
             checkBluetoothState();
         }
-        if (location == null) {
-            Log.d(TAG, "location cleared. Stopping");
-            stopScanner();
-            mLastLocation = null;
-        } else {
-            Log.d(TAG, "updating remote database");
-            mLastLocation = location;
-            updateMongoWebService();
-        }
+        Log.d(TAG, "updating remote database");
+        mLastLocation = location;
+        updateMongoWebService();
         return true;
     }
 
-    public void setMongoCollection(MongoCollection<Document> mongoCollection){
-        if(mongoCollection == null){
-            stopScanner();
-        }
-        mMongoCollection = mongoCollection;
+    public void initialize(){
+        MainActivity m = (MainActivity)getActivity();
     }
+
+    public void terminate() {
+        ((MainActivity)getActivity()).postToBackgroundHandler(mRemoveUsFromVigintillionAndStopServerTask);
+        stopScanner();
+        mLastLocation = null;
+    }
+
+    private Runnable mRemoveUsFromVigintillionAndStopServerTask = new Runnable() {
+        @Override
+        public void run() {
+            Log.d(TAG, "Removing us from vigintillion database and stopping web server");
+            ((MainActivity)getActivity()).getMongoSensorCollection()
+                    .deleteOne(eq("id", mOurScannerId));
+            mWebServer.stop();
+        }
+    };
 
     private Runnable mUpdateMongoWebServiceTask = new Runnable() {
         @Override
         public void run() {
-            if (mMongoCollection != null && mLastLocation != null) {
-                Log.d(TAG, "Mongo: updating server with our information");
+            if (mLastLocation != null) {
+                Log.d(TAG, "Updating Vigintillion server with our information");
                 Document document = new Document()
-                        .append("name", mBtAdapter.getAddress())
+                        .append("id", mOurScannerId)
                         .append("ip", getLocalIpAddress())
                         .append("port", HTTP_SERVER_PORT)
                         .append("loc", new Document()
                                 .append("types", "Point"))
                         .append("coordinates", Arrays.asList(mLastLocation.latitude, mLastLocation.longitude));
-                mMongoCollection.updateOne(eq("id", mBtAdapter.getAddress()), document, new UpdateOptions().upsert(true));
+                ((MainActivity)getActivity()).getMongoSensorCollection()
+                        .updateOne(eq("id", mBtAdapter.getAddress()), document, new UpdateOptions().upsert(true));
             }
         }
     };
 
     public void updateMongoWebService() {
-        mExecutor.submit(mUpdateMongoWebServiceTask);
+        ((MainActivity)getActivity()).postToBackgroundHandler(mUpdateMongoWebServiceTask);
     }
 
     private void checkBluetoothState(){
@@ -199,13 +201,22 @@ public class BluetoothScannerFragment extends Fragment {
         else{
             btLeScanner = mBtAdapter.getBluetoothLeScanner();
             btLeScanner.startScan(SCAN_FILTERS, SCAN_SETTINGS, scanCallback);
+            mOurScannerId = mBtAdapter.getAddress();
+            Log.d(TAG, "Our id is " + mOurScannerId);
+            ((MainActivity)getActivity()).postToBackgroundHandler(mStartWebServerTask);
+        }
+    }
+
+    private Runnable mStartWebServerTask = new Runnable() {
+        @Override
+        public void run() {
             try {
                 mWebServer.start();
             } catch(IOException ioe) {
-                Log.e(TAG, "Error starting WEB server");
+                Log.e(TAG, "Error starting Web server");
             }
         }
-    }
+    };
 
     private void setScanCallback() {
         scanCallback = new ScanCallback() {
@@ -233,7 +244,7 @@ public class BluetoothScannerFragment extends Fragment {
     private Beacon addBeacon(ScanResult result){
         Beacon beacon = new Beacon();
         // don't care: result.getDevice().getName();
-        String id = result.getDevice().getAddress(); // id = MAC address
+        String id = result.getDevice().getAddress(); // id = BT MAC address
 
         beacon.setRssi(result.getRssi());
         beacon.setId(id);
@@ -261,7 +272,6 @@ public class BluetoothScannerFragment extends Fragment {
 
     @Override
     public void onDestroy() {
-        mExecutor.shutdown();
         mCallbacks = null;
         super.onDestroy();
     }
