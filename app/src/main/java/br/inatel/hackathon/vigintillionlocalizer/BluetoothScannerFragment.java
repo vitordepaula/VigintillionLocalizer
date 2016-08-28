@@ -10,26 +10,41 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.InsertOneOptions;
+import com.mongodb.client.model.UpdateOptions;
+
+import org.bson.Document;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.TimeZone;
-
 import br.inatel.hackathon.vigintillionlocalizer.database.DB;
 import br.inatel.hackathon.vigintillionlocalizer.model.Beacon;
+import fi.iki.elonen.NanoHTTPD;
+
+import static com.mongodb.client.model.Filters.*;
+
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -52,6 +67,7 @@ public class BluetoothScannerFragment extends Fragment {
     private DB database;
 
     private LatLng mLastLocation = null;
+    private MongoCollection<Document> mMongoCollection = null;
 
     private static final ScanSettings SCAN_SETTINGS =
             new ScanSettings.Builder().
@@ -108,14 +124,55 @@ public class BluetoothScannerFragment extends Fragment {
         btAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
+    public String getLocalIpAddress()
+    {
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+                NetworkInterface intf = en.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress()) {
+                        return inetAddress.getHostAddress().toString();
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            Log.e("IP Address", ex.toString());
+        }
+        return null;
+    }
+
+    public void stopScanner(){
+        btLeScanner.stopScan(scanCallback);
+        mMongoCollection.deleteOne(eq("id", btAdapter.getAddress()));
+    }
+
     public void setLocation(LatLng location){
         if(mLastLocation == null) {
             if (btAdapter == null)
                 return;
             checkBluetoothState();
         }
+        if(location == null) stopScanner();
         mLastLocation = location;
-        updateRemoteDb();
+    }
+
+    public void setMongoCollection(MongoCollection<Document> mongoCollection){
+        if(mongoCollection == null){
+            stopScanner();
+        }
+        mMongoCollection = mongoCollection;
+    }
+
+    public void updateMongoWebService() {
+        Document document = new Document()
+                .append("id", btAdapter.getAddress())
+                .append("ip", getLocalIpAddress())
+                .append("port", PORT)
+                .append("loc", new Document()
+                        .append("types", "Point"))
+                        .append("coordinates", Arrays.asList(mLastLocation.latitude, mLastLocation.longitude));
+        mMongoCollection.updateOne(eq("id", btAdapter.getAddress()), document, new UpdateOptions().upsert(true));
     }
 
     private void checkBluetoothState(){
@@ -132,34 +189,6 @@ public class BluetoothScannerFragment extends Fragment {
     }
 
 
-    private class postDataAsync extends AsyncTask<String, Integer, Double> {
-        String urlString;
-        HttpURLConnection urlConnection;
-
-        @Override
-        protected Double doInBackground(String... params) {
-            //urlString = "http://www.mysite.se/index.asp?data=" + params[0];
-            urlString = "https://www.google.com.br/#q=" + params[0];
-            Log.i(TAG, params[0].toString());
-            postData();
-            return null;
-        }
-
-        public void postData(){
-            try {
-                URL url = new URL(urlString);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                InputStream is = new BufferedInputStream(urlConnection.getInputStream());
-                Log.i(TAG, urlConnection.getResponseMessage());
-            } catch (Exception e){
-                e.printStackTrace();
-            } finally {
-                if(urlConnection != null){
-                    urlConnection.disconnect();
-                }
-            }
-        }
-    }
 
     private void setScanCallback() {
         scanCallback = new ScanCallback() {
@@ -169,15 +198,11 @@ public class BluetoothScannerFragment extends Fragment {
                 ScanRecord scanRecord = result.getScanRecord();
                 if (scanRecord == null) {
                     Log.w(TAG, "Null ScanRecord for device " + result.getDevice().getAddress());
-                    return;
                 }
                 else{
                     Log.i("Beacon Name: ", result.getDevice().getName());
                     Beacon beacon = addBeacon(result);
                     onDeviceFound(beacon.getMac(), beacon.getRssi());
-
-                    String dataString = "";
-                    new postDataAsync().execute(result.getDevice().getName());
                 }
             }
 
@@ -197,6 +222,8 @@ public class BluetoothScannerFragment extends Fragment {
         beacon.setMac(mac);
         beacon.setName(deviceName);
         beacon.setDate(getDateAndTime());
+        beacon.setLatitude(mLastLocation.latitude);
+        beacon.setLongitude(mLastLocation.longitude);
 
         boolean found = false;
         for(int i =0; i<beaconList.size(); i++){

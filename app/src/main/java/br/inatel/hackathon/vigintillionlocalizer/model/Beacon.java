@@ -8,8 +8,8 @@ public class Beacon {
     private int rssi;
     private String mac;
     private String date;
-    private float longitude;
-    private float latitude;
+    private double longitude;
+    private double latitude;
     private String name;
 
     public long getId() {
@@ -36,19 +36,19 @@ public class Beacon {
         this.date = date;
     }
 
-    public float getLongitude() {
+    public double getLongitude() {
         return longitude;
     }
 
-    public void setLongitude(float longitude) {
+    public void setLongitude(double longitude) {
         this.longitude = longitude;
     }
 
-    public float getLatitude() {
+    public double getLatitude() {
         return latitude;
     }
 
-    public void setLatitude(float latitude) {
+    public void setLatitude(double latitude) {
         this.latitude = latitude;
     }
 
