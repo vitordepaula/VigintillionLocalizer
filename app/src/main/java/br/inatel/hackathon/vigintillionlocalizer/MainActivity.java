@@ -241,7 +241,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
             Log.d(TAG, "Querying data from DB");
             synchronized (mScanners) {
                 mScanners.clear();
-                Bson filter = geoWithinCenter("loc",mCurrentLocation.getLongitude(),mCurrentLocation.getLatitude(),1.0);
+                Bson filter = geoWithinCenter("loc",mCurrentLocation.getLongitude(),mCurrentLocation.getLatitude(),300.0); // 300m radius
                 mSensorsCollection.find(filter).forEach(new Block<Document>() {
                     @Override
                     public void apply(Document document) {

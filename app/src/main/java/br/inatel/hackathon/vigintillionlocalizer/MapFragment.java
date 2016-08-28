@@ -47,12 +47,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         mMapView = (MapView) rootView.findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
         mMapView.onResume(); // needed to get the map to display immediately
-
         try {
             MapsInitializer.initialize(getActivity().getApplicationContext());
         } catch (Exception e) {
             e.printStackTrace();
         }
+        if (((MainActivity)getActivity()).getLocation() != null)
+            mMapView.getMapAsync(this);
 
         rootView.findViewById(R.id.searchTagFab).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -93,7 +94,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             // our position
             googleMap.addMarker(new MarkerOptions().position(me).flat(true).anchor(0.5f,0.5f)
                     .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.radiobutton_on_background)));
-            googleMap.addCircle(new CircleOptions().center(me).radius(100.0f));
+            googleMap.addCircle(new CircleOptions().center(me).radius(200.0f));
             // scanners
             Collection<MainActivity.ScannerEntry> scannerCollection = ((MainActivity)getActivity()).getScannerCollection();
             for (MainActivity.ScannerEntry scanner : scannerCollection) {
@@ -101,7 +102,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                         .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.radiobutton_off_background)));
             }
             //mMap.addMarker(new MarkerOptions().position(me).title("Marker on me"));
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(me, 17.5f));
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(me, 16.8f));
         }
     }
 
