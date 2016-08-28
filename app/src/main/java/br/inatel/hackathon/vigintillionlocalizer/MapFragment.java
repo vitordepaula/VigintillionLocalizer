@@ -19,6 +19,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -101,7 +103,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 googleMap.addMarker(new MarkerOptions().position(scanner.getLatLng()).flat(true).anchor(0.5f,0.5f)
                         .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.radiobutton_off_background)));
             }
-            //mMap.addMarker(new MarkerOptions().position(me).title("Marker on me"));
+            // found beacons
+            List<LatLng> beacon_locs = ((MainActivity)getActivity()).getBeaconLocationCalculationResults();
+            for (LatLng beacon_loc: beacon_locs)
+                googleMap.addMarker(new MarkerOptions().position(beacon_loc));
             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(me, 16.8f));
         }
     }

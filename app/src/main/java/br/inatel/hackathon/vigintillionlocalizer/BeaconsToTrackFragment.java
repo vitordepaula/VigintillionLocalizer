@@ -64,6 +64,7 @@ public class BeaconsToTrackFragment extends Fragment implements BeaconsAdapter.I
             List<String> selected = mAdapter.getSelected();
             mDb.tracked_delete(selected);
             mAdapter.deleteSelected();
+            ((MainActivity)getActivity()).refreshBeaconList();
         }
     };
 
@@ -104,6 +105,7 @@ public class BeaconsToTrackFragment extends Fragment implements BeaconsAdapter.I
             mAdapter.getDataSet().add(new_beacon);
             mAdapter.notifyDataSetChanged();
             mDb.tracked_add(new_beacon);
+            ((MainActivity)getActivity()).refreshBeaconList();
         }
     }
 

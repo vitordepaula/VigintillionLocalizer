@@ -44,10 +44,11 @@ class WebServer extends NanoHTTPD {
     @Override
     public Response serve(IHTTPSession session) {
         if (session.getMethod().equals(Method.GET)) {
+            //TODO: validate URI path
             List<String> id_list = session.getParameters().get("id");
-            if (id_list.size() > 1)
+            if (id_list != null && id_list.size() > 1)
                 Log.w(TAG, "Ignoring multiple queries for ID fields");
-            if (id_list.isEmpty()) {
+            else if (id_list == null || id_list.isEmpty()) {
                 Log.w(TAG, "HTTP: ID not supplied for query");
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.BAD_REQUEST,
                         "text/plain", "Bad request.");
@@ -62,9 +63,9 @@ class WebServer extends NanoHTTPD {
                 }
                 String answer = new JSONObject()
                         .put("timestamp", beacon.getTimestamp())
-                        .put("latitude", beacon.getLocation().latitude)
-                        .put("longitude", beacon.getLocation().longitude)
-                        .put("rssi", beacon.getRssi())
+                        .put("lat", beacon.getLocation().latitude)
+                        .put("lon", beacon.getLocation().longitude)
+                        .put("signal", beacon.getRssi())
                         .toString();
                 Log.d(TAG, "Replying to query of tag " + id + ": " + answer);
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
