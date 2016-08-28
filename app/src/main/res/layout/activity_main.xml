@@ -4,5 +4,6 @@
     android:id="@+id/fragmentContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:keepScreenOn="true"
     tools:context=".MainActivity"
     tools:layout="@layout/activity_main"/>
