@@ -67,7 +67,7 @@ class WebServer extends NanoHTTPD {
                         .put("lon", beacon.getLocation().longitude)
                         .put("signal", beacon.getRssi())
                         .toString();
-                Log.d(TAG, "Replying to query of tag " + id + ": " + answer);
+                //Log.d(TAG, "Replying to query of tag " + id + ": " + answer);
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                         "application/json", answer);
             } catch (JSONException je) {
