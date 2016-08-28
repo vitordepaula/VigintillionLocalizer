@@ -19,7 +19,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -38,6 +37,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private MapView mMapView;
+    private boolean mInitialMapUpdate = true;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -54,8 +54,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        if (((MainActivity)getActivity()).getLocation() != null)
+        if (((MainActivity)getActivity()).getLocation() != null) {
+            mInitialMapUpdate = true;
             mMapView.getMapAsync(this);
+        }
 
         rootView.findViewById(R.id.searchTagFab).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -107,7 +109,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             List<LatLng> beacon_locs = ((MainActivity)getActivity()).getBeaconLocationCalculationResults();
             for (LatLng beacon_loc: beacon_locs)
                 googleMap.addMarker(new MarkerOptions().position(beacon_loc));
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(me, 16.8f));
+            if (mInitialMapUpdate) {
+                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(me, 16.8f));
+                mInitialMapUpdate = false;
+            }
         }
     }
 
