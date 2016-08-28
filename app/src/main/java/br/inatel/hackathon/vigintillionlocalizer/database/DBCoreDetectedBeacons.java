@@ -7,14 +7,13 @@ import android.database.sqlite.SQLiteOpenHelper;
 /**
  * Created by lucas on 27/08/2016.
  */
-public class DBCore extends SQLiteOpenHelper {
+public class DBCoreDetectedBeacons extends SQLiteOpenHelper {
     private static final String NAME_DB = "beacon";
     private static final int VERSION_DB = 2;
 
-    public DBCore(Context context) {
+    public DBCoreDetectedBeacons(Context context) {
         super(context, NAME_DB, null, VERSION_DB);
     }
-
 
     @Override
     public void onCreate(SQLiteDatabase db) {
@@ -29,7 +28,9 @@ public class DBCore extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("drop table user");
-        onCreate(db);
+        if (oldVersion != newVersion) {
+            db.execSQL("drop table beacon");
+            onCreate(db);
+        }
     }
 }

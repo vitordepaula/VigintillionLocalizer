@@ -197,7 +197,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, Locatio
 
     @Override
     public void onDestroy() {
-        mMapView.onDestroy();
+        if (mMapView != null)
+            mMapView.onDestroy();
         super.onDestroy();
     }
 

@@ -7,7 +7,6 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
-import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -15,7 +14,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
@@ -193,7 +191,7 @@ public class BluetoothScannerFragment extends Fragment {
             if(beaconList.get(i).getMac().equals(mac)){
                 beaconList.remove(i);
                 beaconList.add(beacon);
-                database.update(beacon);
+                database.detected_update(beacon);
                 found = true;
                 break;
             }
@@ -201,7 +199,7 @@ public class BluetoothScannerFragment extends Fragment {
 
         if(!found){
             beaconList.add(beacon);
-            database.insert(beacon);
+            database.detected_insert(beacon);
         }
 
         return beacon;

@@ -1,0 +1,24 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="50sp"
+    android:layout_centerVertical="true"
+    android:elevation="6dp"
+    tools:context="br.inatel.hackathon.vigintillionlocalizer.AddBeaconDialogFragment">
+
+    <TextView
+        android:id="@+id/devices_to_add_caption"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:layout_margin="@dimen/beacon_card_padding_left_right"
+        android:layout_alignParentTop="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/select_a_beacon_caption" />
+    <android.support.v7.widget.RecyclerView
+        android:layout_below="@id/devices_to_add_caption"
+        android:id="@+id/beacon_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+</RelativeLayout>

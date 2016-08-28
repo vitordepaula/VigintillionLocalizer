@@ -11,6 +11,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -19,7 +21,7 @@ import java.util.Vector;
 public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHolder> {
 
     private Context mContext;
-    private Vector<String> mDataSet;
+    private final Vector<String> mDataSet;
     private SparseBooleanArray mSelectedRows = new SparseBooleanArray();
 
     // Provide a reference to the views for each data item
@@ -36,20 +38,25 @@ public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHold
         }
     }
 
-    public interface ISelectionCallbacks {
+    public interface IMultiSelectionCallbacks {
         void onThereAreSelectedItems();
         void onNoMoreSelectedItems();
     }
 
-    private WeakReference<ISelectionCallbacks> mSelectionCallbacks;
+    public interface IItemClickCallback {
+        void onItemClick(String data);
+    }
 
-    public BeaconsAdapter(Context context, ISelectionCallbacks callbacks) {
+    private WeakReference<IMultiSelectionCallbacks> mSelectionCallbacks;
+    private WeakReference<IItemClickCallback> mItemClickCallback;
+
+    public BeaconsAdapter(Context context,
+                          IMultiSelectionCallbacks multiSelectionCallbacks,
+                          IItemClickCallback itemClickCallback) {
         mContext = context;
-        mDataSet = new Vector<>(3);
-        mDataSet.add("66:55:44:A9:AA:31");
-        mDataSet.add("66:55:44:A9:AA:47");
-        mDataSet.add("66:55:44:AA:18:11");
-        mSelectionCallbacks = new WeakReference<>(callbacks);
+        mDataSet = new Vector<>();
+        mSelectionCallbacks = (multiSelectionCallbacks == null ? null : new WeakReference<>(multiSelectionCallbacks));
+        mItemClickCallback = (itemClickCallback == null ? null : new WeakReference<>(itemClickCallback));
     }
 
     @Override
@@ -61,56 +68,71 @@ public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHold
     }
 
     private void doCallbackSelected() {
-        ISelectionCallbacks cb = mSelectionCallbacks.get();
+        IMultiSelectionCallbacks cb = mSelectionCallbacks.get();
         if (cb != null)
             cb.onThereAreSelectedItems();
     }
 
     private void doCallbackNotSelected() {
-        ISelectionCallbacks cb = mSelectionCallbacks.get();
+        IMultiSelectionCallbacks cb = mSelectionCallbacks.get();
         if (cb != null)
             cb.onNoMoreSelectedItems();
+    }
+
+    private void doCallbackItemClicked(String data) {
+        IItemClickCallback cb = mItemClickCallback.get();
+        if (cb != null)
+            cb.onItemClick(data);
     }
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mTextView.setText(mDataSet.get(position));
-        holder.mCardView.setSelected(mSelectedRows.valueAt(position));
-        holder.mCardView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                if (mSelectedRows.size() == 0) {
-                    int pos = holder.getAdapterPosition();
-                    mSelectedRows.put(pos, true);
-                    holder.mCardView.setSelected(true);
-                    notifyItemChanged(pos);
-                    doCallbackSelected();
-                }
-                return false;
-            }
-        });
-        holder.mCardView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mSelectedRows.size() > 0) {
-                    int pos = holder.getAdapterPosition();
-                    if (mSelectedRows.get(pos)) {
-                        mSelectedRows.delete(pos);
-                        holder.mCardView.setSelected(false);
-                        if (mSelectedRows.size() == 0)
-                            doCallbackNotSelected();
-                    } else {
+        if (mSelectionCallbacks != null) {
+            holder.mCardView.setSelected(mSelectedRows.valueAt(position));
+            holder.mCardView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if (mSelectedRows.size() == 0) {
+                        int pos = holder.getAdapterPosition();
                         mSelectedRows.put(pos, true);
                         holder.mCardView.setSelected(true);
+                        notifyItemChanged(pos);
+                        doCallbackSelected();
                     }
-                    notifyItemChanged(pos);
+                    return false;
                 }
-            }
-        });
-        holder.mCardView.setCardBackgroundColor(ContextCompat.getColor(mContext,
-                mSelectedRows.get(position)?
-                        android.R.color.darker_gray :
-                        android.R.color.background_light));
+            });
+            holder.mCardView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mSelectedRows.size() > 0) {
+                        int pos = holder.getAdapterPosition();
+                        if (mSelectedRows.get(pos)) {
+                            mSelectedRows.delete(pos);
+                            holder.mCardView.setSelected(false);
+                            if (mSelectedRows.size() == 0)
+                                doCallbackNotSelected();
+                        } else {
+                            mSelectedRows.put(pos, true);
+                            holder.mCardView.setSelected(true);
+                        }
+                        notifyItemChanged(pos);
+                    } else doCallbackItemClicked(holder.mTextView.getText().toString());
+                }
+            });
+            holder.mCardView.setCardBackgroundColor(ContextCompat.getColor(mContext,
+                    mSelectedRows.get(position) ?
+                            android.R.color.darker_gray :
+                            android.R.color.background_light));
+        } else if (mItemClickCallback != null) {
+            holder.mCardView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    doCallbackItemClicked(holder.mTextView.getText().toString());
+                }
+            });
+        }
     }
 
     @Override
@@ -125,4 +147,13 @@ public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHold
         notifyDataSetChanged();
         doCallbackNotSelected();
     }
+
+    public List<String> getSelected() {
+        List<String> result = new LinkedList<>();
+        for (int i = 0; i< mSelectedRows.size(); i++)
+            result.add(mDataSet.get(mSelectedRows.keyAt(i)));
+        return result;
+    }
+
+    public final List<String> getDataSet() { return mDataSet; }
 }
