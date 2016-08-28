@@ -297,6 +297,9 @@ public class MainActivity extends FragmentActivity implements LocationListener,
             mBeaconToTrackList.clear();
             mBeaconToTrackList.addAll(mDb.tracked_get());
         }
+        synchronized (mBeaconLocationResults) {
+            mBeaconLocationResults.clear();
+        }
     }
 
     /*
@@ -331,7 +334,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
             }
             for (ScannerEntry scanner: mScannersToAsk) {
                 try {
-                    URL url = new URL("http://" + scanner.getAddress() + ":" + scanner.getPort() + "/beacon?id=\"" + mBeacon + "\"");
+                    URL url = new URL("http://" + scanner.getAddress() + ":" + scanner.getPort() + "/beacon?id=" + mBeacon);
                     HttpURLConnection conn = (HttpURLConnection)url.openConnection();
                     // TODO: set accepted content type as json
                     conn.setReadTimeout(2000 /* milliseconds */);
@@ -347,6 +350,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
                         InputStream is = conn.getInputStream();
                         int len = is.read(buf);
                         String json_string = new String(buf,0,len,"UTF-8");
+                        //Log.d(TAG, "Dev " + mBeacon + ": from " + scanner.getAddress() + ":" + scanner.getPort() + "->" + json_string);
                         // Then to JSON
                         try {
                             JSONObject obj = new JSONObject(json_string);
@@ -360,9 +364,10 @@ public class MainActivity extends FragmentActivity implements LocationListener,
                             } catch(JSONException x) {
                                 signal = -80;
                             }
-                            int compensated_signal = (int)(signal - 10 * Math.log(delay));
+                            int compensated_signal = (int)(signal - Math.log(delay));
                             // Calculate running mean
-                            int weight = Math.min(0, 100 - compensated_signal);
+                            int weight = Math.max(0, compensated_signal + 130);
+                            //Log.d(TAG, "Dev " + mBeacon + " processed " + timestamp + "," + lat + "," + lon + "," + compensated_signal + "->" + weight);
                             int total_weight = acc_weight + weight;
                             mean_lat = (mean_lat * acc_weight + lat * weight) / total_weight;
                             mean_lon = (mean_lon * acc_weight + lon * weight) / total_weight;
@@ -376,6 +381,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
                     Log.d(TAG, "Beacon " + mBeacon + ": Error talking to " + scanner.getAddress() + " at port " + scanner.getPort());
                 }
             }
+            Log.d(TAG, "Dev " + mBeacon + " acc " + acc_weight + ", pos_m " + mean_lat + "," + mean_lon);
             synchronized (mBeaconLocationResults) {
                 if (acc_weight == 0)
                     mBeaconLocationResults.remove(mBeacon);
