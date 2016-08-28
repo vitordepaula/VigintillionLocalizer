@@ -2,7 +2,6 @@ package br.inatel.hackathon.vigintillionlocalizer;
 
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.view.View;
 
 public class MainActivity extends FragmentActivity {
 

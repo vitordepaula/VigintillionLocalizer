@@ -1,8 +1,5 @@
 <resources>
     <string name="app_name">Vigintillion Localizer</string>
-    <string name="title_activity_maps">Map</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_maps">Vigintillion Localizer</string>
     <string name="beacons_to_track_title">Beacons to track:</string>
 </resources>
