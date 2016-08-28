@@ -15,6 +15,8 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
@@ -39,7 +41,7 @@ public class BluetoothScannerFragment extends Fragment {
     private static final int REQUEST_ENABLE_BT = 1;
     private static final String TAG = "MainActivity";
 
-    private BluetoothAdapter btAdapter;
+    private BluetoothAdapter btAdapter = null;
     private BluetoothLeScanner btLeScanner;
 
     private ScanCallback scanCallback;
@@ -48,6 +50,8 @@ public class BluetoothScannerFragment extends Fragment {
     private RecyclerView recyclerView;
 
     private DB database;
+
+    private LatLng mLastLocation = null;
 
     private static final ScanSettings SCAN_SETTINGS =
             new ScanSettings.Builder().
@@ -102,8 +106,16 @@ public class BluetoothScannerFragment extends Fragment {
 
         // BLUETOOTH
         btAdapter = BluetoothAdapter.getDefaultAdapter();
-        checkBluetoothState();
+    }
 
+    public void setLocation(LatLng location){
+        if(mLastLocation == null) {
+            if (btAdapter == null)
+                return;
+            checkBluetoothState();
+        }
+        mLastLocation = location;
+        updateRemoteDb();
     }
 
     private void checkBluetoothState(){
