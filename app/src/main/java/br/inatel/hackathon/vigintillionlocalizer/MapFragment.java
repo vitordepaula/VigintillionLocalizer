@@ -177,6 +177,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, Locatio
     public void onStop() {
         stopLocationUpdates();
         mGoogleApiClient.disconnect();
+        ((MainActivity)getActivity()).getScanner().setMongoCollection(null);
         super.onStop();
     }
 
@@ -267,6 +268,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, Locatio
             MongoClient mongoClient = new MongoClient(uri);
             MongoDatabase db = mongoClient.getDatabase(uri.getDatabase());
             mSensorsCollection = db.getCollection("ble-sensors");
+            ((MainActivity)getActivity()).getScanner().setMongoCollection(mSensorsCollection);
         }
     };
 
@@ -309,8 +311,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, Locatio
         }
     };
 
+
     @Override
     public void onLocationChanged(Location location) {
+        // only updates the scanner location if we have moved at least 15 meters
+        if (mCurrentLocation == null || mCurrentLocation.distanceTo(location) > 15.0) {
+            LatLng latlng = new LatLng(location.getLatitude(),location.getLongitude());
+            ((MainActivity)getActivity()).getScanner().setLocation(latlng);
+        }
+        // update current location
         mCurrentLocation = location;
         // Obtain nearby scanners
         mExecutor.submit(mFetchSensorsFromDatabaseTask);

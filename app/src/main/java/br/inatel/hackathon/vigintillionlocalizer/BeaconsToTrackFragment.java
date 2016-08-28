@@ -40,11 +40,11 @@ public class BeaconsToTrackFragment extends Fragment implements BeaconsAdapter.I
         mUiHandler = new Handler(Looper.getMainLooper());
         mDb = new DB(getContext());
         // Inflate the layout for this fragment
-        View rootview = inflater.inflate(R.layout.fragment_beacons_to_track, container, false);
-        RecyclerView mRecyclerView = (RecyclerView)rootview.findViewById(R.id.beacon_list);
+        View rootView = inflater.inflate(R.layout.fragment_beacons_to_track, container, false);
+        RecyclerView mRecyclerView = (RecyclerView)rootView.findViewById(R.id.beacon_list);
         mRecyclerView.setHasFixedSize(true);
         // FAB
-        mFab = (FloatingActionButton)rootview.findViewById(R.id.addOrRemoveBeaconFab);
+        mFab = (FloatingActionButton)rootView.findViewById(R.id.addOrRemoveBeaconFab);
         // Use a Linear Layout Manager
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         // Adapter
@@ -55,7 +55,7 @@ public class BeaconsToTrackFragment extends Fragment implements BeaconsAdapter.I
         // Read data from DB
         mAdapter.getDataSet().addAll(mDb.tracked_get());
         mAdapter.notifyDataSetChanged();
-        return rootview;
+        return rootView;
     }
 
     private View.OnClickListener mDeleteSelectedItems = new View.OnClickListener() {
