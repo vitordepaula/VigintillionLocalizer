@@ -88,7 +88,7 @@ public class BeaconsToTrackFragment extends Fragment implements BeaconsAdapter.I
         ft.addToBackStack(null);
 
         // Create and show the dialog.
-        AddBeaconDialogFragment fragment = AddBeaconDialogFragment.newInstance(mAdapter.getDataSet());
+        AddBeaconDialogFragment fragment = AddBeaconDialogFragment.newInstance(DB.getIds(mAdapter.getDataSet()));
         fragment.setTargetFragment(this,ADD_NEW_BEACON);
         fragment.show(ft,"dialog");
     }

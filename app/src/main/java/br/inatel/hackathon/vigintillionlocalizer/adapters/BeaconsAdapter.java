@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Vector;
 
 import br.inatel.hackathon.vigintillionlocalizer.R;
+import br.inatel.hackathon.vigintillionlocalizer.database.DB;
 
 /**
  * Created by vitor on 27/08/16.
@@ -23,7 +24,7 @@ import br.inatel.hackathon.vigintillionlocalizer.R;
 public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHolder> {
 
     private Context mContext;
-    private final Vector<String> mDataSet;
+    private final Vector<DB.TrackedBeacon> mDataSet;
     private SparseBooleanArray mSelectedRows = new SparseBooleanArray();
 
     // Provide a reference to the views for each data item
@@ -89,7 +90,7 @@ public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.mTextView.setText(mDataSet.get(position));
+        holder.mTextView.setText(mDataSet.get(position).beacon_id);
         if (mSelectionCallbacks != null) {
             holder.mCardView.setSelected(mSelectedRows.valueAt(position));
             holder.mCardView.setOnLongClickListener(new View.OnLongClickListener() {
@@ -126,7 +127,7 @@ public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHold
             holder.mCardView.setCardBackgroundColor(ContextCompat.getColor(mContext,
                     mSelectedRows.get(position) ?
                             android.R.color.darker_gray :
-                            android.R.color.background_light));
+                            colorIdToRes(mDataSet.get(position).color_id)));
         } else if (mItemClickCallback != null) {
             holder.mCardView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -137,6 +138,16 @@ public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHold
         }
     }
 
+    public static int colorIdToRes(int color_id) {
+        switch (color_id) {
+            case 1: return android.R.color.holo_green_dark;
+            case 2: return android.R.color.holo_red_light;
+            case 3: return android.R.color.holo_blue_dark;
+            case 4: return android.R.color.holo_orange_light;
+            case 5: return android.R.color.holo_purple;
+            default: return android.R.color.background_light;
+        }
+    }
     @Override
     public int getItemCount() {
         return mDataSet.size();
@@ -153,9 +164,9 @@ public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHold
     public List<String> getSelected() {
         List<String> result = new LinkedList<>();
         for (int i = 0; i< mSelectedRows.size(); i++)
-            result.add(mDataSet.get(mSelectedRows.keyAt(i)));
+            result.add(mDataSet.get(mSelectedRows.keyAt(i)).beacon_id);
         return result;
     }
 
-    public final List<String> getDataSet() { return mDataSet; }
+    public final List<DB.TrackedBeacon> getDataSet() { return mDataSet; }
 }

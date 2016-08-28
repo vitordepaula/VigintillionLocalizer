@@ -18,6 +18,7 @@ import java.util.List;
 import br.inatel.hackathon.vigintillionlocalizer.adapters.BeaconsAdapter;
 import br.inatel.hackathon.vigintillionlocalizer.R;
 import br.inatel.hackathon.vigintillionlocalizer.activity.MainActivity;
+import br.inatel.hackathon.vigintillionlocalizer.database.DB;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -60,6 +61,18 @@ public class AddBeaconDialogFragment extends DialogFragment implements BeaconsAd
         scanner = ((MainActivity)getActivity()).getScanner();
         scanner.setCallbacks(this);
 
+        final View mSelectedColor = rootview.findViewById(R.id.selected_color);
+        View.OnClickListener colorClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mSelectedColor.setBackground(v.getBackground());
+            }
+        };
+        rootview.findViewById(R.id.select_color_blue).setOnClickListener(colorClickListener);
+        rootview.findViewById(R.id.select_color_green).setOnClickListener(colorClickListener);
+        rootview.findViewById(R.id.select_color_purple).setOnClickListener(colorClickListener);
+        rootview.findViewById(R.id.select_color_red).setOnClickListener(colorClickListener);
+        rootview.findViewById(R.id.select_color_yellow).setOnClickListener(colorClickListener);
         return rootview;
     }
 
@@ -86,8 +99,12 @@ public class AddBeaconDialogFragment extends DialogFragment implements BeaconsAd
     @Override
     public void onDeviceFound(String name, int signal) {
         // Add only if not already added or not already present in the list
-        if (!mExceptionList.contains(name) && !mAdapter.getDataSet().contains(name)) {
-            mAdapter.getDataSet().add(name);
+        if (!mExceptionList.contains(name)) {
+            for (DB.TrackedBeacon beacon: mAdapter.getDataSet())
+                if (beacon.beacon_id == name)
+                    return;
+            DB.TrackedBeacon newObj = new DB.TrackedBeacon(name,0);
+            mAdapter.getDataSet().add(newObj);
             mAdapter.notifyDataSetChanged();
         }
     }

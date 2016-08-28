@@ -82,14 +82,33 @@ public class DB {
             db_tracked.delete("tracked_beacons", "mac = \"" + beacon + "\"", null);
     }
 
-    public List<String> tracked_get() {
+    public static class TrackedBeacon {
+        public String beacon_id;
+        public int color_id;
+        public TrackedBeacon(String beacon_id, int color_id) {
+            this.beacon_id = beacon_id;
+            this.color_id = color_id;
+        }
+    }
+
+    public static List<String> getIds(List<TrackedBeacon> beacons) {
         List<String> result = new LinkedList<>();
-        String[] columns = new String[]{"_id", "mac"};
+        for (TrackedBeacon b: beacons) {
+            result.add(b.beacon_id);
+        }
+        return result;
+    }
+
+    public List<TrackedBeacon> tracked_get() {
+        List<TrackedBeacon> result = new LinkedList<>();
+        String[] columns = new String[]{"_id", "mac", "color"};
         Cursor cursor = db_tracked.query("tracked_beacons", columns, null, null, null, null, null);
         if (cursor.getCount() > 0) {
             cursor.moveToFirst();
             do {
-                result.add(cursor.getString(1));
+                Integer c = cursor.getInt(2);
+                int color = (c == null ? 0 : c);
+                result.add(new TrackedBeacon(cursor.getString(1), color));
             } while (cursor.moveToNext());
         }
         return result;

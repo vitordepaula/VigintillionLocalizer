@@ -8,4 +8,5 @@
     <string name="select_a_beacon_caption">Select a nearby beacon:</string>
     <string name="error_connecting">Error connecting to Google services.\\nThe application will now close.</string>
     <string name="launch_image">Launch Image</string>
+    <string name="select_a_color_caption">Select a color:</string>
 </resources>

@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  */
 public class DBCoreTrackedBeacons extends SQLiteOpenHelper {
     private static final String NAME_DB = "tracked_beacons";
-    private static final int VERSION_DB = 1;
+    private static final int VERSION_DB = 2;
 
     public DBCoreTrackedBeacons(Context context) {
         super(context, NAME_DB, null, VERSION_DB);
@@ -19,7 +19,7 @@ public class DBCoreTrackedBeacons extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("create table tracked_beacons" +
                 "(_id integer primary key autoincrement, " +
-                "mac text not null);");
+                "mac text not null, color integer);");
     }
 
     @Override
