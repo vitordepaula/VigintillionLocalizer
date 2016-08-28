@@ -5,6 +5,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -24,24 +26,25 @@ public class DB {
 
     public void detected_insert(Beacon beacon){
         ContentValues values = new ContentValues();
-        values.put("mac", beacon.getMac());
+        values.put("id", beacon.getId());
         values.put("rssi", beacon.getRssi());
-        values.put("latitude", beacon.getLatitude());
-        values.put("longitude", beacon.getLongitude());
-        values.put("date", beacon.getDate());
+        values.put("latitude", beacon.getLocation().latitude);
+        values.put("longitude", beacon.getLocation().longitude);
+        values.put("timestamp", beacon.getTimestamp());
         db_detected.insert("beacon", null, values);
     }
 
     public void detected_update(Beacon beacon){
-        long idFound = detected_search(beacon.getMac());
-        if(idFound != -1){
+        String id = beacon.getId();
+        Beacon b = detected_search(id);
+        if (b != null) {
             ContentValues values = new ContentValues();
-            values.put("mac", beacon.getMac());
+            values.put("id", id);
             values.put("rssi", beacon.getRssi());
-            values.put("latitude", beacon.getLatitude());
-            values.put("longitude", beacon.getLongitude());
-            values.put("date", beacon.getDate());
-            db_detected.update("beacon", values, "_id = ?", new String[]{"" + idFound});
+            values.put("latitude", beacon.getLocation().latitude);
+            values.put("longitude", beacon.getLocation().longitude);
+            values.put("timestamp", beacon.getTimestamp());
+            db_detected.update("beacon", values, "id = ?", new String[]{id});
         }
     }
 
@@ -49,20 +52,23 @@ public class DB {
         db_detected.delete("beacon", "_id = " + beacon.getId(), null);
     }
 
-    public long detected_search(String mac) {
-        String[] columns = new String[]{"_id", "mac", "rssi", "latitude", "longitude", "date"};
-        Cursor cursor = db_detected.query("beacon", columns, null, null, null, null, "date DESC");
+    public Beacon detected_search(String id) {
+        String[] columns = new String[]{"_id", "id", "rssi", "latitude", "longitude", "timestamp"};
+        Cursor cursor = db_detected.query("beacon", columns, null, null, null, null, "timestamp DESC");
         if (cursor.getCount() > 0) {
             cursor.moveToFirst();
             do {
-                String macFromDB = cursor.getString(1);
-                if (macFromDB.equals(mac)) {
-                    long id = cursor.getLong(0);
-                    return id;
+                String dbId = cursor.getString(1);
+                if (dbId.equals(id)) {
+                    return new Beacon()
+                            .setId(id)
+                            .setRssi(cursor.getInt(2))
+                            .setLocation(new LatLng(cursor.getFloat(3),cursor.getFloat(4)))
+                            .setTimestamp(cursor.getLong(5));
                 }
             } while (cursor.moveToNext());
         }
-        return -1;
+        return null;
     }
 
     public void tracked_add(String beacon) {

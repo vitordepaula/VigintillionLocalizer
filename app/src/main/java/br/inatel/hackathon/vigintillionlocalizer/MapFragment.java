@@ -297,7 +297,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, Locatio
                         try {
                             JSONObject json = new JSONObject(document.toJson());
                             JSONArray coord = json.getJSONObject("loc").getJSONArray("coordinates");
-                            mScanners.put(json.getString("id"), new ScannerEntry(
+                            mScanners.put(json.getString("name"), new ScannerEntry(
                                     new LatLng(coord.getDouble(0),coord.getDouble(1)),
                                     json.getString("ip"),json.getInt("port")));
                         } catch (JSONException je) {
@@ -311,13 +311,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, Locatio
         }
     };
 
+    private boolean mScannerLocationUpdated = false;
 
     @Override
     public void onLocationChanged(Location location) {
         // only updates the scanner location if we have moved at least 15 meters
-        if (mCurrentLocation == null || mCurrentLocation.distanceTo(location) > 15.0) {
+        if (mCurrentLocation == null || !mScannerLocationUpdated || mCurrentLocation.distanceTo(location) > 15.0) {
             LatLng latlng = new LatLng(location.getLatitude(),location.getLongitude());
-            ((MainActivity)getActivity()).getScanner().setLocation(latlng);
+            mScannerLocationUpdated = ((MainActivity)getActivity()).getScanner().setLocation(latlng);
         }
         // update current location
         mCurrentLocation = location;

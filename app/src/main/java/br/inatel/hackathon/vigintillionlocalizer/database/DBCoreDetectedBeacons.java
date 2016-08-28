@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  */
 public class DBCoreDetectedBeacons extends SQLiteOpenHelper {
     private static final String NAME_DB = "beacon";
-    private static final int VERSION_DB = 2;
+    private static final int VERSION_DB = 3;
 
     public DBCoreDetectedBeacons(Context context) {
         super(context, NAME_DB, null, VERSION_DB);
@@ -19,11 +19,11 @@ public class DBCoreDetectedBeacons extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("create table beacon" +
                 "(_id integer primary key autoincrement, " +
-                "mac text not null, " +
+                "id text not null, " +
                 "rssi integer not null, " +
                 "latitude float not null, " +
                 "longitude float not null, " +
-                "date text not null);");
+                "timestamp integer not null);");
     }
 
     @Override

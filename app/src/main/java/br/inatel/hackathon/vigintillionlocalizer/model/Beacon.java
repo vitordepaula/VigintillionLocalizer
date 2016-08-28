@@ -1,62 +1,47 @@
 package br.inatel.hackathon.vigintillionlocalizer.model;
 
+import com.google.android.gms.maps.model.LatLng;
+
 /**
  * Created by lucas on 27/08/2016.
  */
 public class Beacon {
-    private long id;
+    private String id; // MAC address
     private int rssi;
-    private String mac;
-    private String date;
-    private double longitude;
-    private double latitude;
-    private String name;
+    private long timestamp; // unix time (epoch)
+    private LatLng location;
 
-    public long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public Beacon setId(String id) {
         this.id = id;
+        return this;
     }
-
-    public String getMac() {  return mac;  }
-
-    public void setMac(String mac) { this.mac = mac; }
 
     public int getRssi() { return rssi; }
 
-    public void setRssi(int rssi) { this.rssi = rssi; }
-
-    public String getDate() {
-        return date;
+    public Beacon setRssi(int rssi) {
+        this.rssi = rssi;
+        return this;
     }
 
-    public void setDate(String date) {
-        this.date = date;
+    public long getTimestamp() {
+        return timestamp;
     }
 
-    public double getLongitude() {
-        return longitude;
+    public Beacon setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+        return this;
     }
 
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
+    public LatLng getLocation() {
+        return location;
     }
 
-    public double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public Beacon setLocation(LatLng location) {
+        this.location = location;
+        return this;
     }
 }
