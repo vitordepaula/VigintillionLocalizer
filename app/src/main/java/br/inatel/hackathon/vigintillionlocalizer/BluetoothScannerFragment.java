@@ -7,7 +7,9 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -24,8 +26,9 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import br.inatel.hackathon.vigintillionlocalizer.database.DB;
 import br.inatel.hackathon.vigintillionlocalizer.model.Beacon;
@@ -91,11 +94,22 @@ public class BluetoothScannerFragment extends Fragment {
         // Required empty public constructor
     }
 
+    private static final String PREFERENCES = "vigintillion";
+    private static final String PREF_SCANNER_ID = "OurScannerID";
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mCallbacks = null;
+
+        // OUR ID
+        SharedPreferences prefs = getContext().getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE);
+        mOurScannerId = prefs.getString(PREF_SCANNER_ID, null);
+        if (mOurScannerId == null) {
+            mOurScannerId = UUID.randomUUID().toString();
+            prefs.edit().putString(PREF_SCANNER_ID,mOurScannerId).apply();
+        }
+        Log.d(TAG, "Our id is " + mOurScannerId);
 
         // SCAN CALLBACK AND SCANNER
         setScanCallback();
@@ -111,22 +125,37 @@ public class BluetoothScannerFragment extends Fragment {
         mWebServer = new WebServer(mDb);
     }
 
-    public String getLocalIpAddress()
-    {
+    /**
+     * Get IP address from first non-localhost interface
+     * @param useIPv4 true=return ipv4, false=return ipv6
+     * @return  address or empty string
+     */
+    public static String getIPAddress(boolean useIPv4) {
         try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
-                NetworkInterface i = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = i.getInetAddresses(); enumIpAddr.hasMoreElements();) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress()) {
-                        return inetAddress.getHostAddress();
+            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+            for (NetworkInterface intf : interfaces) {
+                List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
+                for (InetAddress addr : addrs) {
+                    if (!addr.isLoopbackAddress()) {
+                        String sAddr = addr.getHostAddress();
+                        //boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
+                        boolean isIPv4 = sAddr.indexOf(':')<0;
+                        if (useIPv4) {
+                            if (isIPv4)
+                                return sAddr;
+                        } else {
+                            if (!isIPv4) {
+                                int delim = sAddr.indexOf('%'); // drop ip6 zone suffix
+                                return delim<0 ? sAddr.toUpperCase() : sAddr.substring(0, delim).toUpperCase();
+                            }
+                        }
                     }
                 }
             }
         } catch (Exception ex) {
-            Log.e(TAG, "IP Address error: " + ex.toString());
+            // for now eat exceptions
         }
-        return null;
+        return "";
     }
 
     public void stopScanner() {
@@ -174,15 +203,15 @@ public class BluetoothScannerFragment extends Fragment {
         public void run() {
             if (mLastLocation != null) {
                 Log.d(TAG, "Updating Vigintillion server with our information");
-                Document document = new Document()
+                Document document = new Document("$set", new Document()
                         .append("id", mOurScannerId)
-                        .append("ip", getLocalIpAddress())
+                        .append("ip", getIPAddress(true))
                         .append("port", HTTP_SERVER_PORT)
                         .append("loc", new Document()
-                                .append("types", "Point"))
-                        .append("coordinates", Arrays.asList(mLastLocation.latitude, mLastLocation.longitude));
+                                .append("type", "Point")
+                                .append("coordinates", Arrays.asList(mLastLocation.longitude, mLastLocation.latitude))));
                 ((MainActivity)getActivity()).getMongoSensorCollection()
-                        .updateOne(eq("id", mBtAdapter.getAddress()), document, new UpdateOptions().upsert(true));
+                        .updateOne(eq("id", mOurScannerId), document, new UpdateOptions().upsert(true));
             }
         }
     };
@@ -201,8 +230,6 @@ public class BluetoothScannerFragment extends Fragment {
         else{
             btLeScanner = mBtAdapter.getBluetoothLeScanner();
             btLeScanner.startScan(SCAN_FILTERS, SCAN_SETTINGS, scanCallback);
-            mOurScannerId = mBtAdapter.getAddress();
-            Log.d(TAG, "Our id is " + mOurScannerId);
             ((MainActivity)getActivity()).postToBackgroundHandler(mStartWebServerTask);
         }
     }

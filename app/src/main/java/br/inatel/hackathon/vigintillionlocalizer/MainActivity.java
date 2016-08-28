@@ -241,7 +241,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
             Log.d(TAG, "Querying data from DB");
             synchronized (mScanners) {
                 mScanners.clear();
-                Bson filter = geoWithinCenter("loc",mCurrentLocation.getLatitude(),mCurrentLocation.getLongitude(),1.0);
+                Bson filter = geoWithinCenter("loc",mCurrentLocation.getLongitude(),mCurrentLocation.getLatitude(),1.0);
                 mSensorsCollection.find(filter).forEach(new Block<Document>() {
                     @Override
                     public void apply(Document document) {
@@ -249,7 +249,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
                             JSONObject json = new JSONObject(document.toJson());
                             JSONArray coord = json.getJSONObject("loc").getJSONArray("coordinates");
                             mScanners.put(json.getString("id"), new ScannerEntry(
-                                    new LatLng(coord.getDouble(0),coord.getDouble(1)),
+                                    new LatLng(coord.getDouble(1),coord.getDouble(0)),
                                     json.getString("ip"),json.getInt("port")));
                         } catch (JSONException je) {
                             Log.w(TAG, "Error reading JSON format from MongoDB");
@@ -257,6 +257,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
                         }
                     }
                 });
+                Log.d(TAG, "We got " + mScanners.size() + " scanners");
             }
             mUiHandler.post(mUpdateMapTask);
         }
