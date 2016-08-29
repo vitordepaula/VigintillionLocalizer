@@ -6,4 +6,6 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="select_a_beacon_caption">Select a nearby beacon:</string>
+    <string name="error_connecting">Error connecting to Google services.\\nThe application will now close.</string>
+    <string name="launch_image">Launch Image</string>
 </resources>

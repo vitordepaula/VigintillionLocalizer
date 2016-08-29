@@ -1,15 +1,17 @@
 package br.inatel.hackathon.vigintillionlocalizer.activity;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -41,10 +43,11 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import br.inatel.hackathon.vigintillionlocalizer.fragments.BluetoothScannerFragment;
-import br.inatel.hackathon.vigintillionlocalizer.fragments.MapFragment;
 import br.inatel.hackathon.vigintillionlocalizer.R;
 import br.inatel.hackathon.vigintillionlocalizer.database.DB;
+import br.inatel.hackathon.vigintillionlocalizer.fragments.BluetoothScannerFragment;
+import br.inatel.hackathon.vigintillionlocalizer.fragments.LaunchFragment;
+import br.inatel.hackathon.vigintillionlocalizer.fragments.MapFragment;
 
 import static com.mongodb.client.model.Filters.geoWithinCenter;
 
@@ -52,9 +55,13 @@ public class MainActivity extends FragmentActivity implements LocationListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+    private final List<String> mBeaconToTrackList = new LinkedList<>();
+    final private HashMap<String, ScannerEntry> mScanners = new HashMap<>();
+    private final HashMap<String, LatLng> mBeaconLocationResults = new HashMap<>();
     private BluetoothScannerFragment mBluetoothScanner;
     private LocationRequest mLocationRequest = new LocationRequest().setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY).setInterval(5000);
     private GoogleApiClient mGoogleApiClient;
+    private boolean mLaunchScreenShowing = true;
     private boolean mRequestingLocationUpdates = false;
     private Location mCurrentLocation;
     private MapFragment mMapFragment;
@@ -63,8 +70,86 @@ public class MainActivity extends FragmentActivity implements LocationListener,
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundHandlerThread;
     private DB mDb;
-    private final List<String> mBeaconToTrackList = new LinkedList<>();
-    final private HashMap<String,ScannerEntry> mScanners = new HashMap<>();
+    private Runnable mConnectToDatabaseTask = new Runnable() {
+        @Override
+        public void run() {
+            Log.d(TAG, "Connecting to Database");
+            MongoClientURI uri = new MongoClientURI("mongodb://vps.de.paula.nom.br/vigintillion");
+            MongoClient mongoClient = new MongoClient(uri);
+            MongoDatabase db = mongoClient.getDatabase(uri.getDatabase());
+            mSensorsCollection = db.getCollection("sensors.ble");
+            mBluetoothScanner.initialize();
+        }
+    };
+    private boolean mScannerLocationUpdated = false;
+    private Runnable mUpdateMapTask = new Runnable() {
+        @Override
+        public void run() {
+            if (mMapFragment.isVisible())
+                mMapFragment.updateMap();
+        }
+    };
+    private Runnable mFetchSensorsFromDatabaseTask = new Runnable() {
+        @Override
+        public void run() {
+            if (mSensorsCollection == null) {
+                Log.w(TAG, "Could not query DB: not connected.");
+                return;
+            }
+            Log.d(TAG, "Querying data from DB");
+            synchronized (mScanners) {
+                mScanners.clear();
+                Bson filter = geoWithinCenter("loc", mCurrentLocation.getLongitude(), mCurrentLocation.getLatitude(), 300.0); // 300m radius
+                mSensorsCollection.find(filter).forEach(new Block<Document>() {
+                    @Override
+                    public void apply(Document document) {
+                        try {
+                            JSONObject json = new JSONObject(document.toJson());
+                            JSONArray coord = json.getJSONObject("loc").getJSONArray("coordinates");
+                            mScanners.put(json.getString("id"), new ScannerEntry(
+                                    new LatLng(coord.getDouble(1), coord.getDouble(0)),
+                                    json.getString("ip"), json.getInt("port")));
+                        } catch (JSONException je) {
+                            Log.w(TAG, "Error reading JSON format from MongoDB");
+                            // skip
+                        }
+                    }
+                });
+                Log.d(TAG, "We got " + mScanners.size() + " scanners");
+            }
+            mUiHandler.post(mUpdateMapTask);
+        }
+    };
+    private boolean mBeaconLoopTaskRunning = true;
+    private ExecutorService mBeaconRequestScheduler;
+    private Runnable mBeaconQueryingMainLoopTask = new Runnable() {
+        @Override
+        public void run() {
+            List<String> mBeacons = new LinkedList<>();
+            while (mBeaconLoopTaskRunning) {
+                synchronized (mBeaconToTrackList) {
+                    mBeacons.clear();
+                    mBeacons.addAll(mBeaconToTrackList);
+                }
+                for (String beacon : mBeacons) {
+                    mBeaconRequestScheduler.submit(new BeaconRequestTask(beacon));
+                    try {
+                        Thread.sleep(100, 0);
+                    } catch (InterruptedException i) {
+                        mBeaconLoopTaskRunning = false;
+                    }
+                    if (!mBeaconLoopTaskRunning)
+                        break;
+                }
+                if (mBeaconLoopTaskRunning) try {
+                    Thread.sleep(5000, 0);
+                } catch (InterruptedException i) {
+                    mBeaconLoopTaskRunning = false;
+                }
+            }
+            Log.d(TAG, "Beacon Querying Main Loop Task Terminated");
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +174,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
         mBluetoothScanner = new BluetoothScannerFragment();
         mMapFragment = MapFragment.newInstance();
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.fragmentContainer, mMapFragment)
+                .replace(R.id.fragmentContainer, new LaunchFragment())
                 .add(mBluetoothScanner, "BTScanner")
                 .commit();
     }
@@ -127,18 +212,6 @@ public class MainActivity extends FragmentActivity implements LocationListener,
         }
     }
 
-    private Runnable mConnectToDatabaseTask = new Runnable() {
-        @Override
-        public void run() {
-            Log.d(TAG, "Connecting to Database");
-            MongoClientURI uri = new MongoClientURI("mongodb://vps.de.paula.nom.br/vigintillion");
-            MongoClient mongoClient = new MongoClient(uri);
-            MongoDatabase db = mongoClient.getDatabase(uri.getDatabase());
-            mSensorsCollection = db.getCollection("sensors.ble");
-            mBluetoothScanner.initialize();
-        }
-    };
-
     public BluetoothScannerFragment getScanner() { return mBluetoothScanner; }
 
     protected void startLocationUpdates() {
@@ -159,11 +232,19 @@ public class MainActivity extends FragmentActivity implements LocationListener,
         }
     }
 
+    private void closeLaunchScreen() {
+        getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(R.anim.fade_out, R.anim.fade_in)
+                .replace(R.id.fragmentContainer, mMapFragment)
+                .commit();
+        mLaunchScreenShowing = false;
+    }
+
     @Override
     public void onConnected(Bundle connectionHint) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            String[] permissions = { Manifest.permission.ACCESS_FINE_LOCATION };
+            String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION};
             ActivityCompat.requestPermissions(this, permissions, 3030);
             return;
         }
@@ -194,19 +275,33 @@ public class MainActivity extends FragmentActivity implements LocationListener,
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         mCurrentLocation = null;
         mRequestingLocationUpdates = false;
+        new AlertDialog.Builder(this)
+                .setMessage(R.string.error_connecting)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        MainActivity.this.finish();
+                    }
+                }).create().show();
     }
 
     public Location getLocation() {
         return mCurrentLocation;
     }
 
-    private boolean mScannerLocationUpdated = false;
-
     @Override
     public void onLocationChanged(Location location) {
+        if (mLaunchScreenShowing)
+            closeLaunchScreen();
         // only updates the scanner location if we have moved at least 15 meters
         if (mCurrentLocation == null || !mScannerLocationUpdated || mCurrentLocation.distanceTo(location) > 15.0) {
-            LatLng latlng = new LatLng(location.getLatitude(),location.getLongitude());
+            LatLng latlng = new LatLng(location.getLatitude(), location.getLongitude());
             mScannerLocationUpdated = mBluetoothScanner.updateLocation(latlng);
         }
         // update current location
@@ -219,23 +314,9 @@ public class MainActivity extends FragmentActivity implements LocationListener,
         mBackgroundHandler.post(task);
     }
 
-    public class ScannerEntry {
-        private LatLng mLatLng;
-        private String mAddress;
-        private int mPort;
-        public ScannerEntry(LatLng latlng, String address, int port) {
-            mLatLng = latlng; mAddress = address; mPort = port;
-        }
-        public LatLng getLatLng() {
-            return mLatLng;
-        }
-        public String getAddress() {
-            return mAddress;
-        }
-        public int getPort() {
-            return mPort;
-        }
-    }
+    /*
+     * Code below talk to each detected sensor periodically and ask about the tags they want
+     */
 
     public Collection<ScannerEntry> getScannerCollection() {
         Collection<ScannerEntry> results = new LinkedList<>();
@@ -244,46 +325,6 @@ public class MainActivity extends FragmentActivity implements LocationListener,
         }
         return results;
     }
-
-    private Runnable mUpdateMapTask = new Runnable() {
-        @Override
-        public void run() {
-            if (mMapFragment.isVisible())
-                mMapFragment.updateMap();
-        }
-    };
-
-    private Runnable mFetchSensorsFromDatabaseTask = new Runnable() {
-        @Override
-        public void run() {
-            if (mSensorsCollection == null) {
-                Log.w(TAG, "Could not query DB: not connected.");
-                return;
-            }
-            Log.d(TAG, "Querying data from DB");
-            synchronized (mScanners) {
-                mScanners.clear();
-                Bson filter = geoWithinCenter("loc",mCurrentLocation.getLongitude(),mCurrentLocation.getLatitude(),300.0); // 300m radius
-                mSensorsCollection.find(filter).forEach(new Block<Document>() {
-                    @Override
-                    public void apply(Document document) {
-                        try {
-                            JSONObject json = new JSONObject(document.toJson());
-                            JSONArray coord = json.getJSONObject("loc").getJSONArray("coordinates");
-                            mScanners.put(json.getString("id"), new ScannerEntry(
-                                    new LatLng(coord.getDouble(1),coord.getDouble(0)),
-                                    json.getString("ip"),json.getInt("port")));
-                        } catch (JSONException je) {
-                            Log.w(TAG, "Error reading JSON format from MongoDB");
-                            // skip
-                        }
-                    }
-                });
-                Log.d(TAG, "We got " + mScanners.size() + " scanners");
-            }
-            mUiHandler.post(mUpdateMapTask);
-        }
-    };
 
     public MongoCollection<Document> getMongoSensorCollection() {
         return mSensorsCollection;
@@ -299,14 +340,6 @@ public class MainActivity extends FragmentActivity implements LocationListener,
         }
     }
 
-    /*
-     * Code below talk to each detected sensor periodically and ask about the tags they want
-     */
-
-    private boolean mBeaconLoopTaskRunning = true;
-    private ExecutorService mBeaconRequestScheduler;
-    private final HashMap<String,LatLng> mBeaconLocationResults = new HashMap<>();
-
     public List<LatLng> getBeaconLocationCalculationResults() {
         List<LatLng> results = new LinkedList<>();
         synchronized (mBeaconLocationResults) {
@@ -315,9 +348,37 @@ public class MainActivity extends FragmentActivity implements LocationListener,
         return results;
     }
 
+    public class ScannerEntry {
+        private LatLng mLatLng;
+        private String mAddress;
+        private int mPort;
+
+        public ScannerEntry(LatLng latlng, String address, int port) {
+            mLatLng = latlng;
+            mAddress = address;
+            mPort = port;
+        }
+
+        public LatLng getLatLng() {
+            return mLatLng;
+        }
+
+        public String getAddress() {
+            return mAddress;
+        }
+
+        public int getPort() {
+            return mPort;
+        }
+    }
+
     // This class ask about a beacon to all nearby scanners and triangulate position if possible
     private class BeaconRequestTask implements Runnable {
         private String mBeacon;
+        public BeaconRequestTask(String beacon) {
+            mBeacon = beacon;
+        }
+
         @Override
         public void run() {
             byte[] buf = new byte[1500];
@@ -329,10 +390,10 @@ public class MainActivity extends FragmentActivity implements LocationListener,
                 mScannersToAsk.clear();
                 mScannersToAsk.addAll(mScanners.values());
             }
-            for (ScannerEntry scanner: mScannersToAsk) {
+            for (ScannerEntry scanner : mScannersToAsk) {
                 try {
                     URL url = new URL("http://" + scanner.getAddress() + ":" + scanner.getPort() + "/beacon?id=" + mBeacon);
-                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     // TODO: set accepted content type as json
                     conn.setReadTimeout(2000 /* milliseconds */);
                     conn.setConnectTimeout(5000 /* milliseconds */);
@@ -346,22 +407,22 @@ public class MainActivity extends FragmentActivity implements LocationListener,
                         // Convert the InputStream into a string
                         InputStream is = conn.getInputStream();
                         int len = is.read(buf);
-                        String json_string = new String(buf,0,len,"UTF-8");
+                        String json_string = new String(buf, 0, len, "UTF-8");
                         //Log.d(TAG, "Dev " + mBeacon + ": from " + scanner.getAddress() + ":" + scanner.getPort() + "->" + json_string);
                         // Then to JSON
                         try {
                             JSONObject obj = new JSONObject(json_string);
                             long timestamp = obj.getLong("timestamp");
                             long delay = System.currentTimeMillis() - timestamp;
-                            float lat = (float)obj.getDouble("lat");
-                            float lon = (float)obj.getDouble("lon");
+                            float lat = (float) obj.getDouble("lat");
+                            float lon = (float) obj.getDouble("lon");
                             int signal;
                             try {
                                 signal = obj.getInt("signal");
-                            } catch(JSONException x) {
+                            } catch (JSONException x) {
                                 signal = -80;
                             }
-                            int compensated_signal = (int)(signal - Math.log(delay));
+                            int compensated_signal = (int) (signal - Math.log(delay));
                             // Calculate running mean
                             int weight = Math.max(0, compensated_signal + 130);
                             //Log.d(TAG, "Dev " + mBeacon + " processed " + timestamp + "," + lat + "," + lon + "," + compensated_signal + "->" + weight);
@@ -369,7 +430,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
                             mean_lat = (mean_lat * acc_weight + lat * weight) / total_weight;
                             mean_lon = (mean_lon * acc_weight + lon * weight) / total_weight;
                             acc_weight = total_weight;
-                        } catch(JSONException e) {
+                        } catch (JSONException e) {
                             // Not calculating running mean for error responses
                         }
                         conn.disconnect();
@@ -386,37 +447,5 @@ public class MainActivity extends FragmentActivity implements LocationListener,
                     mBeaconLocationResults.put(mBeacon, new LatLng(mean_lat, mean_lon));
             }
         }
-        public BeaconRequestTask(String beacon) {
-            mBeacon = beacon;
-        }
-    };
-
-    private Runnable mBeaconQueryingMainLoopTask = new Runnable() {
-        @Override
-        public void run() {
-            List<String> mBeacons = new LinkedList<>();
-            while (mBeaconLoopTaskRunning) {
-                synchronized (mBeaconToTrackList) {
-                    mBeacons.clear();
-                    mBeacons.addAll(mBeaconToTrackList);
-                }
-                for (String beacon: mBeacons) {
-                    mBeaconRequestScheduler.submit(new BeaconRequestTask(beacon));
-                    try {
-                        Thread.sleep(100,0);
-                    } catch (InterruptedException i) {
-                        mBeaconLoopTaskRunning = false;
-                    }
-                    if (!mBeaconLoopTaskRunning)
-                        break;
-                }
-                if (mBeaconLoopTaskRunning) try {
-                    Thread.sleep(5000,0);
-                } catch (InterruptedException i) {
-                    mBeaconLoopTaskRunning = false;
-                }
-            }
-            Log.d(TAG, "Beacon Querying Main Loop Task Terminated");
-        }
-    };
+    }
 }
