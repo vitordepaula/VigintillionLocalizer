@@ -1,4 +1,4 @@
-package br.inatel.hackathon.vigintillionlocalizer;
+package br.inatel.hackathon.vigintillionlocalizer.servers;
 
 /**
  * Created by vitor on 28/08/16.
@@ -13,13 +13,14 @@ import java.io.IOException;
 import java.util.List;
 
 import br.inatel.hackathon.vigintillionlocalizer.database.DB;
+import br.inatel.hackathon.vigintillionlocalizer.fragments.BluetoothScannerFragment;
 import br.inatel.hackathon.vigintillionlocalizer.model.Beacon;
 import fi.iki.elonen.NanoHTTPD;
 
 /**
  * HTTP Server
  */
-class WebServer extends NanoHTTPD {
+public class WebServer extends NanoHTTPD {
 
     private static final String TAG = WebServer.class.getSimpleName();
     private DB mDb;

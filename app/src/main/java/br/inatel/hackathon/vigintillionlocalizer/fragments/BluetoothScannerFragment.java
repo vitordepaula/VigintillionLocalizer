@@ -1,4 +1,4 @@
-package br.inatel.hackathon.vigintillionlocalizer;
+package br.inatel.hackathon.vigintillionlocalizer.fragments;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -30,6 +30,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import br.inatel.hackathon.vigintillionlocalizer.servers.WebServer;
+import br.inatel.hackathon.vigintillionlocalizer.activity.MainActivity;
 import br.inatel.hackathon.vigintillionlocalizer.database.DB;
 import br.inatel.hackathon.vigintillionlocalizer.model.Beacon;
 
@@ -45,7 +47,7 @@ public class BluetoothScannerFragment extends Fragment {
     private static final int REQUEST_ENABLE_BT = 1;
     private static final String TAG = BluetoothScannerFragment.class.getSimpleName();
 
-    static final int HTTP_SERVER_PORT = 5476;
+    public static final int HTTP_SERVER_PORT = 5476;
 
     private BluetoothAdapter mBtAdapter = null;
     private BluetoothLeScanner btLeScanner;

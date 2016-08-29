@@ -1,4 +1,4 @@
-package br.inatel.hackathon.vigintillionlocalizer;
+package br.inatel.hackathon.vigintillionlocalizer.fragments;
 
 import android.location.Location;
 import android.os.Bundle;
@@ -20,6 +20,9 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Collection;
 import java.util.List;
+
+import br.inatel.hackathon.vigintillionlocalizer.R;
+import br.inatel.hackathon.vigintillionlocalizer.activity.MainActivity;
 
 /**
  * A simple {@link Fragment} subclass.

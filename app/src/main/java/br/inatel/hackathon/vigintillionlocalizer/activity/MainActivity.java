@@ -1,4 +1,4 @@
-package br.inatel.hackathon.vigintillionlocalizer;
+package br.inatel.hackathon.vigintillionlocalizer.activity;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -30,15 +30,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
@@ -47,6 +41,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import br.inatel.hackathon.vigintillionlocalizer.fragments.BluetoothScannerFragment;
+import br.inatel.hackathon.vigintillionlocalizer.fragments.MapFragment;
+import br.inatel.hackathon.vigintillionlocalizer.R;
 import br.inatel.hackathon.vigintillionlocalizer.database.DB;
 
 import static com.mongodb.client.model.Filters.geoWithinCenter;
@@ -218,11 +215,11 @@ public class MainActivity extends FragmentActivity implements LocationListener,
         mBackgroundHandler.post(mFetchSensorsFromDatabaseTask);
     }
 
-    void postToBackgroundHandler(Runnable task) {
+    public void postToBackgroundHandler(Runnable task) {
         mBackgroundHandler.post(task);
     }
 
-    class ScannerEntry {
+    public class ScannerEntry {
         private LatLng mLatLng;
         private String mAddress;
         private int mPort;
@@ -240,7 +237,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
         }
     }
 
-    Collection<ScannerEntry> getScannerCollection() {
+    public Collection<ScannerEntry> getScannerCollection() {
         Collection<ScannerEntry> results = new LinkedList<>();
         synchronized (mScanners) {
             results.addAll(mScanners.values());
@@ -288,11 +285,11 @@ public class MainActivity extends FragmentActivity implements LocationListener,
         }
     };
 
-    MongoCollection<Document> getMongoSensorCollection() {
+    public MongoCollection<Document> getMongoSensorCollection() {
         return mSensorsCollection;
     }
 
-    void refreshBeaconList() {
+    public void refreshBeaconList() {
         synchronized (mBeaconToTrackList) {
             mBeaconToTrackList.clear();
             mBeaconToTrackList.addAll(mDb.tracked_get());

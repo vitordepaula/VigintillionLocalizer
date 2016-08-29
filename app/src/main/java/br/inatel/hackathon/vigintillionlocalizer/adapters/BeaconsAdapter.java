@@ -1,4 +1,4 @@
-package br.inatel.hackathon.vigintillionlocalizer;
+package br.inatel.hackathon.vigintillionlocalizer.adapters;
 
 import android.content.Context;
 import android.support.v4.content.ContextCompat;
@@ -14,6 +14,8 @@ import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
+
+import br.inatel.hackathon.vigintillionlocalizer.R;
 
 /**
  * Created by vitor on 27/08/16.

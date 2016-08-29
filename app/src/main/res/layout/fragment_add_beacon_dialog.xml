@@ -5,7 +5,7 @@
     android:layout_margin="50sp"
     android:layout_centerVertical="true"
     android:elevation="6dp"
-    tools:context="br.inatel.hackathon.vigintillionlocalizer.AddBeaconDialogFragment">
+    tools:context=".fragments.AddBeaconDialogFragment">
 
     <TextView
         android:id="@+id/devices_to_add_caption"

@@ -1,4 +1,4 @@
-package br.inatel.hackathon.vigintillionlocalizer;
+package br.inatel.hackathon.vigintillionlocalizer.fragments;
 
 
 import android.content.Intent;
@@ -18,6 +18,9 @@ import android.view.animation.ScaleAnimation;
 
 import java.util.List;
 
+import br.inatel.hackathon.vigintillionlocalizer.adapters.BeaconsAdapter;
+import br.inatel.hackathon.vigintillionlocalizer.R;
+import br.inatel.hackathon.vigintillionlocalizer.activity.MainActivity;
 import br.inatel.hackathon.vigintillionlocalizer.database.DB;
 
 /**

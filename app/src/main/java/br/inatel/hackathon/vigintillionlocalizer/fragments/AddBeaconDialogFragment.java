@@ -1,4 +1,4 @@
-package br.inatel.hackathon.vigintillionlocalizer;
+package br.inatel.hackathon.vigintillionlocalizer.fragments;
 
 
 import android.content.DialogInterface;
@@ -15,7 +15,9 @@ import android.view.ViewGroup;
 import java.util.LinkedList;
 import java.util.List;
 
-import static br.inatel.hackathon.vigintillionlocalizer.BeaconsToTrackFragment.*;
+import br.inatel.hackathon.vigintillionlocalizer.adapters.BeaconsAdapter;
+import br.inatel.hackathon.vigintillionlocalizer.R;
+import br.inatel.hackathon.vigintillionlocalizer.activity.MainActivity;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -71,14 +73,14 @@ public class AddBeaconDialogFragment extends DialogFragment implements BeaconsAd
     public void onItemClick(String data) {
         getFragmentManager().popBackStack();
         Intent resultData = new Intent();
-        resultData.putExtra(SELECTED_ITEM, data);
-        getTargetFragment().onActivityResult(ADD_NEW_BEACON, RESULT_OK, resultData);
+        resultData.putExtra(BeaconsToTrackFragment.SELECTED_ITEM, data);
+        getTargetFragment().onActivityResult(BeaconsToTrackFragment.ADD_NEW_BEACON, BeaconsToTrackFragment.RESULT_OK, resultData);
     }
 
     @Override
     public void onDismiss(DialogInterface dialog) {
         super.onDismiss(dialog);
-        getTargetFragment().onActivityResult(ADD_NEW_BEACON, RESULT_CANCEL, null);
+        getTargetFragment().onActivityResult(BeaconsToTrackFragment.ADD_NEW_BEACON, BeaconsToTrackFragment.RESULT_CANCEL, null);
     }
 
     @Override
