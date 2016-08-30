@@ -4,9 +4,6 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-/**
- * Created by lucas on 27/08/2016.
- */
 public class DBCoreTrackedBeacons extends SQLiteOpenHelper {
     private static final String NAME_DB = "tracked_beacons";
     private static final int VERSION_DB = 3;

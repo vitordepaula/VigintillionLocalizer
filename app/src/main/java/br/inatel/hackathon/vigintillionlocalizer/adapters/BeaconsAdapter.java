@@ -18,9 +18,6 @@ import java.util.Vector;
 import br.inatel.hackathon.vigintillionlocalizer.R;
 import br.inatel.hackathon.vigintillionlocalizer.model.TrackedBeacon;
 
-/**
- * Created by vitor on 27/08/16.
- */
 public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHolder> {
 
     private Context mContext;

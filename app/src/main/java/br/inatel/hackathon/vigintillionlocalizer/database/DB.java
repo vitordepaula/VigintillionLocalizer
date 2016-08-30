@@ -13,9 +13,6 @@ import java.util.List;
 import br.inatel.hackathon.vigintillionlocalizer.model.Beacon;
 import br.inatel.hackathon.vigintillionlocalizer.model.TrackedBeacon;
 
-/**
- * Created by lucas on 27/08/2016.
- */
 public class DB {
     private SQLiteDatabase db_detected;
     private SQLiteDatabase db_tracked;
@@ -69,6 +66,7 @@ public class DB {
                 }
             } while (cursor.moveToNext());
         }
+        cursor.close();
         return null;
     }
 
@@ -99,11 +97,13 @@ public class DB {
         if (cursor.getCount() > 0) {
             cursor.moveToFirst();
             do {
-                Integer c = cursor.getInt(2);
-                int color = (c == null ? 0 : c);
+                int color;
+                try { color = cursor.getInt(2); }
+                catch (Exception e) { color = 0; }
                 result.add(new TrackedBeacon(cursor.getString(1), color));
             } while (cursor.moveToNext());
         }
+        cursor.close();
         return result;
     }
 }

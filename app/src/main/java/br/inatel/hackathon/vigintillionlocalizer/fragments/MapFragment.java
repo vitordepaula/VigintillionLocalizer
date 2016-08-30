@@ -19,12 +19,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 import br.inatel.hackathon.vigintillionlocalizer.R;
 import br.inatel.hackathon.vigintillionlocalizer.activity.MainActivity;
-import br.inatel.hackathon.vigintillionlocalizer.adapters.BeaconsAdapter;
 import br.inatel.hackathon.vigintillionlocalizer.model.TrackedBeacon;
 
 /**

@@ -1,8 +1,5 @@
 package br.inatel.hackathon.vigintillionlocalizer.model;
 
-/**
- * Created by vitor on 29/08/16.
- */
 public class TrackedBeacon {
     public String beacon_id;
     public int color_id;

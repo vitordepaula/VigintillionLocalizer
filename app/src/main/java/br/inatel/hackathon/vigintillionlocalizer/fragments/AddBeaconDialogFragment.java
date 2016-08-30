@@ -15,9 +15,9 @@ import android.view.ViewGroup;
 import java.util.LinkedList;
 import java.util.List;
 
-import br.inatel.hackathon.vigintillionlocalizer.adapters.BeaconsAdapter;
 import br.inatel.hackathon.vigintillionlocalizer.R;
 import br.inatel.hackathon.vigintillionlocalizer.activity.MainActivity;
+import br.inatel.hackathon.vigintillionlocalizer.adapters.BeaconsAdapter;
 import br.inatel.hackathon.vigintillionlocalizer.adapters.BeaconsAdapter.IItemClickCallback;
 import br.inatel.hackathon.vigintillionlocalizer.model.TrackedBeacon;
 
@@ -124,7 +124,7 @@ public class AddBeaconDialogFragment extends DialogFragment implements IItemClic
         // Add only if not already added or not already present in the list
         if (!mExceptionList.contains(name)) {
             for (TrackedBeacon beacon: mAdapter.getDataSet())
-                if (beacon.beacon_id == name)
+                if (beacon.beacon_id.equals(name))
                     return;
             TrackedBeacon newObj = new TrackedBeacon(name,0);
             mAdapter.getDataSet().add(newObj);

@@ -2,6 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_margin="50sp"
     android:layout_centerVertical="true"
     android:elevation="6dp"
@@ -14,61 +15,68 @@
         android:layout_alignParentTop="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_toLeftOf="@+id/selected_color"
-        android:layout_toStartOf="@id/selected_color"
+        android:layout_toStartOf="@+id/selected_color"
         android:text="@string/select_a_color_caption" />
     <FrameLayout
         android:id="@id/selected_color"
         android:elevation="10sp"
-        android:background="@android:color/holo_red_light"
-        android:layout_alignParentRight="true"
+        android:background="@drawable/square_red"
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
         android:layout_margin="5sp"
         android:layout_width="50sp"
         android:layout_height="50sp"/>
-    <LinearLayout
+    <android.support.percent.PercentRelativeLayout
         android:id="@+id/color_picker_layout"
         android:layout_below="@id/select_color_caption"
         android:layout_width="match_parent"
-        android:layout_height="60sp"
-        android:orientation="horizontal">
-        <Button
+        android:layout_height="50sp"
+        android:paddingStart="2sp"
+        android:paddingEnd="0sp">
+        <FrameLayout
             android:id="@+id/select_color_green"
-            android:background="@android:color/holo_green_dark"
+            android:background="@drawable/square_green"
             android:layout_margin="2sp"
-            android:layout_width="0sp"
-            android:layout_weight="0.2"
+            android:layout_width="0dp"
+            app:layout_widthPercent="18%"
+            app:layout_marginPercent="1%"
             android:layout_height="match_parent"/>
-        <Button
+        <FrameLayout
             android:id="@+id/select_color_red"
-            android:background="@android:color/holo_red_light"
+            android:background="@drawable/square_red"
             android:layout_margin="2sp"
-            android:layout_width="0sp"
-            android:layout_weight="0.2"
+            android:layout_width="0dp"
+            app:layout_widthPercent="18%"
+            app:layout_marginPercent="1%"
+            android:layout_toEndOf="@id/select_color_green"
             android:layout_height="match_parent"/>
-        <Button
+        <FrameLayout
             android:id="@+id/select_color_blue"
-            android:background="@android:color/holo_blue_dark"
+            android:background="@drawable/square_blue"
             android:layout_margin="2sp"
-            android:layout_width="0sp"
-            android:layout_weight="0.2"
+            android:layout_width="0dp"
+            app:layout_widthPercent="18%"
+            app:layout_marginPercent="1%"
+            android:layout_toEndOf="@id/select_color_red"
             android:layout_height="match_parent"/>
-        <Button
+        <FrameLayout
             android:id="@+id/select_color_yellow"
-            android:background="@android:color/holo_orange_light"
+            android:background="@drawable/square_yellow"
             android:layout_margin="2sp"
-            android:layout_width="0sp"
-            android:layout_weight="0.2"
+            android:layout_width="0dp"
+            app:layout_widthPercent="18%"
+            app:layout_marginPercent="1%"
+            android:layout_toEndOf="@id/select_color_blue"
             android:layout_height="match_parent"/>
-        <Button
+        <FrameLayout
             android:id="@+id/select_color_purple"
-            android:background="@android:color/holo_purple"
-            android:layout_margin="2sp"
-            android:layout_width="0sp"
-            android:layout_weight="0.2"
+            android:background="@drawable/square_purple"
+            android:layout_width="0dp"
+            app:layout_widthPercent="18%"
+            app:layout_marginPercent="1%"
+            android:layout_toEndOf="@id/select_color_yellow"
             android:layout_height="match_parent"/>
-    </LinearLayout>
+    </android.support.percent.PercentRelativeLayout>
 
 
     <TextView
