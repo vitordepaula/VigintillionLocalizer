@@ -18,12 +18,13 @@ import java.util.List;
 import br.inatel.hackathon.vigintillionlocalizer.adapters.BeaconsAdapter;
 import br.inatel.hackathon.vigintillionlocalizer.R;
 import br.inatel.hackathon.vigintillionlocalizer.activity.MainActivity;
-import br.inatel.hackathon.vigintillionlocalizer.database.DB;
+import br.inatel.hackathon.vigintillionlocalizer.adapters.BeaconsAdapter.IItemClickCallback;
+import br.inatel.hackathon.vigintillionlocalizer.model.TrackedBeacon;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class AddBeaconDialogFragment extends DialogFragment implements BeaconsAdapter.IItemClickCallback, BluetoothScannerFragment.IBluetoothScannerCallbacks {
+public class AddBeaconDialogFragment extends DialogFragment implements IItemClickCallback, BluetoothScannerFragment.IBluetoothScannerCallbacks {
 
     /**
      * Create a new instance of AddBeaconDialogFragment
@@ -45,6 +46,7 @@ public class AddBeaconDialogFragment extends DialogFragment implements BeaconsAd
 
     private BeaconsAdapter mAdapter;
     private BluetoothScannerFragment scanner;
+    private int mSelectedColorId;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -66,6 +68,13 @@ public class AddBeaconDialogFragment extends DialogFragment implements BeaconsAd
             @Override
             public void onClick(View v) {
                 mSelectedColor.setBackground(v.getBackground());
+                switch (v.getId()) {
+                    case R.id.select_color_green:  mSelectedColorId = 1; break;
+                    case R.id.select_color_blue:   mSelectedColorId = 2; break;
+                    case R.id.select_color_yellow: mSelectedColorId = 3; break;
+                    case R.id.select_color_purple: mSelectedColorId = 4; break;
+                    default: mSelectedColorId = 0; break;
+                }
             }
         };
         rootview.findViewById(R.id.select_color_blue).setOnClickListener(colorClickListener);
@@ -73,7 +82,20 @@ public class AddBeaconDialogFragment extends DialogFragment implements BeaconsAd
         rootview.findViewById(R.id.select_color_purple).setOnClickListener(colorClickListener);
         rootview.findViewById(R.id.select_color_red).setOnClickListener(colorClickListener);
         rootview.findViewById(R.id.select_color_yellow).setOnClickListener(colorClickListener);
+
         return rootview;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (MainActivity.TEST_MODE) {
+            List<TrackedBeacon> ds = mAdapter.getDataSet();
+            ds.add(new TrackedBeacon("0C:F3:EE:00:D9:48",0));
+            ds.add(new TrackedBeacon("66:55:44:33:22:11",0));
+            ds.add(new TrackedBeacon("FC:68:C2:69:5F:23",0));
+            mAdapter.notifyDataSetChanged();
+        }
     }
 
     @Override
@@ -83,10 +105,11 @@ public class AddBeaconDialogFragment extends DialogFragment implements BeaconsAd
     }
 
     @Override
-    public void onItemClick(String data) {
+    public void onItemClick(String name) {
         getFragmentManager().popBackStack();
         Intent resultData = new Intent();
-        resultData.putExtra(BeaconsToTrackFragment.SELECTED_ITEM, data);
+        resultData.putExtra(BeaconsToTrackFragment.SELECTED_ITEM, name);
+        resultData.putExtra(BeaconsToTrackFragment.SELECTED_COLOR, mSelectedColorId);
         getTargetFragment().onActivityResult(BeaconsToTrackFragment.ADD_NEW_BEACON, BeaconsToTrackFragment.RESULT_OK, resultData);
     }
 
@@ -100,10 +123,10 @@ public class AddBeaconDialogFragment extends DialogFragment implements BeaconsAd
     public void onDeviceFound(String name, int signal) {
         // Add only if not already added or not already present in the list
         if (!mExceptionList.contains(name)) {
-            for (DB.TrackedBeacon beacon: mAdapter.getDataSet())
+            for (TrackedBeacon beacon: mAdapter.getDataSet())
                 if (beacon.beacon_id == name)
                     return;
-            DB.TrackedBeacon newObj = new DB.TrackedBeacon(name,0);
+            TrackedBeacon newObj = new TrackedBeacon(name,0);
             mAdapter.getDataSet().add(newObj);
             mAdapter.notifyDataSetChanged();
         }

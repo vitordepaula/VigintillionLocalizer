@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import br.inatel.hackathon.vigintillionlocalizer.model.Beacon;
+import br.inatel.hackathon.vigintillionlocalizer.model.TrackedBeacon;
 
 /**
  * Created by lucas on 27/08/2016.
@@ -19,7 +20,7 @@ public class DB {
     private SQLiteDatabase db_detected;
     private SQLiteDatabase db_tracked;
 
-    public DB(Context ctx){
+    public DB(Context ctx) {
         db_detected = new DBCoreDetectedBeacons(ctx).getWritableDatabase();
         db_tracked = new DBCoreTrackedBeacons(ctx).getWritableDatabase();
     }
@@ -71,24 +72,16 @@ public class DB {
         return null;
     }
 
-    public void tracked_add(String beacon) {
+    public void tracked_add(String beacon, int color_id) {
         ContentValues values = new ContentValues();
         values.put("mac", beacon);
+        values.put("color", color_id);
         db_tracked.insert("tracked_beacons", null, values);
     }
 
     public void tracked_delete(List<String> beacons) {
         for (String beacon: beacons)
             db_tracked.delete("tracked_beacons", "mac = \"" + beacon + "\"", null);
-    }
-
-    public static class TrackedBeacon {
-        public String beacon_id;
-        public int color_id;
-        public TrackedBeacon(String beacon_id, int color_id) {
-            this.beacon_id = beacon_id;
-            this.color_id = color_id;
-        }
     }
 
     public static List<String> getIds(List<TrackedBeacon> beacons) {

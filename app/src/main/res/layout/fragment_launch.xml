@@ -1,17 +1,30 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="br.inatel.hackathon.vigintillionlocalizer.fragments.LaunchFragment">
 
+    <TextView
+        android:id="@+id/launch_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50sp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:typeface="serif"
+        android:textStyle="bold|italic"
+        android:text="@string/app_name"/>
     <ImageView
         android:id="@+id/launch_image"
+        android:layout_below="@id/launch_text"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:adjustViewBounds="true"
         android:layout_margin="30sp"
         android:alpha="1"
         android:contentDescription="@string/launch_image"
         android:elevation="4sp"
         android:src="@mipmap/ic_launcher" />
 
-</FrameLayout>
+</RelativeLayout>

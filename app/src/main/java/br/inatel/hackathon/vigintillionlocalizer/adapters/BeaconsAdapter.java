@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Vector;
 
 import br.inatel.hackathon.vigintillionlocalizer.R;
-import br.inatel.hackathon.vigintillionlocalizer.database.DB;
+import br.inatel.hackathon.vigintillionlocalizer.model.TrackedBeacon;
 
 /**
  * Created by vitor on 27/08/16.
@@ -24,7 +24,7 @@ import br.inatel.hackathon.vigintillionlocalizer.database.DB;
 public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHolder> {
 
     private Context mContext;
-    private final Vector<DB.TrackedBeacon> mDataSet;
+    private final Vector<TrackedBeacon> mDataSet;
     private SparseBooleanArray mSelectedRows = new SparseBooleanArray();
 
     // Provide a reference to the views for each data item
@@ -47,7 +47,7 @@ public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHold
     }
 
     public interface IItemClickCallback {
-        void onItemClick(String data);
+        void onItemClick(String name);
     }
 
     private WeakReference<IMultiSelectionCallbacks> mSelectionCallbacks;
@@ -65,9 +65,8 @@ public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHold
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         // create a new view
-        View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.beacon_view, parent, false);
-        return new ViewHolder((CardView)v);
+        return new ViewHolder((CardView)LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.beacon_view, parent, false));
     }
 
     private void doCallbackSelected() {
@@ -82,10 +81,10 @@ public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHold
             cb.onNoMoreSelectedItems();
     }
 
-    private void doCallbackItemClicked(String data) {
+    private void doCallbackItemClicked(String name) {
         IItemClickCallback cb = mItemClickCallback.get();
         if (cb != null)
-            cb.onItemClick(data);
+            cb.onItemClick(name);
     }
 
     @Override
@@ -121,7 +120,8 @@ public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHold
                             holder.mCardView.setSelected(true);
                         }
                         notifyItemChanged(pos);
-                    } else doCallbackItemClicked(holder.mTextView.getText().toString());
+                    } else if (mItemClickCallback != null)
+                        doCallbackItemClicked(holder.mTextView.getText().toString());
                 }
             });
             holder.mCardView.setCardBackgroundColor(ContextCompat.getColor(mContext,
@@ -141,11 +141,10 @@ public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHold
     public static int colorIdToRes(int color_id) {
         switch (color_id) {
             case 1: return android.R.color.holo_green_dark;
-            case 2: return android.R.color.holo_red_light;
-            case 3: return android.R.color.holo_blue_dark;
-            case 4: return android.R.color.holo_orange_light;
-            case 5: return android.R.color.holo_purple;
-            default: return android.R.color.background_light;
+            case 2: return android.R.color.holo_blue_dark;
+            case 3: return android.R.color.holo_orange_light;
+            case 4: return android.R.color.holo_purple;
+            default: return android.R.color.holo_red_light;
         }
     }
     @Override
@@ -168,5 +167,5 @@ public class BeaconsAdapter extends RecyclerView.Adapter<BeaconsAdapter.ViewHold
         return result;
     }
 
-    public final List<DB.TrackedBeacon> getDataSet() { return mDataSet; }
+    public final List<TrackedBeacon> getDataSet() { return mDataSet; }
 }

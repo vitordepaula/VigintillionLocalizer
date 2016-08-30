@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Localizador Vigintillion</string>
+    <string name="beacons_to_track_title">Etiquetas a procurar:</string>
+    <string name="error_connecting">Erro conectando aos serviços do Google./nA aplicação agora irá fechar.</string>
+    <string name="launch_image">Imagem de lançamento</string>
+    <string name="select_a_beacon_caption">Selecione uma etiqueta próxima:</string>
+    <string name="select_a_color_caption">Selecione uma cor:</string>
+    <string name="title_activity_maps">Localizador Vigintillion</string>
+</resources>

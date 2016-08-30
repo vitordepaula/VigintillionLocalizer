@@ -40,6 +40,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -48,16 +49,20 @@ import br.inatel.hackathon.vigintillionlocalizer.database.DB;
 import br.inatel.hackathon.vigintillionlocalizer.fragments.BluetoothScannerFragment;
 import br.inatel.hackathon.vigintillionlocalizer.fragments.LaunchFragment;
 import br.inatel.hackathon.vigintillionlocalizer.fragments.MapFragment;
+import br.inatel.hackathon.vigintillionlocalizer.model.TrackedBeacon;
 
 import static com.mongodb.client.model.Filters.geoWithinCenter;
 
 public class MainActivity extends FragmentActivity implements LocationListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
+    // Set this to "true" to be able to add example tags and show them on map without using real RF tags
+    public static final boolean TEST_MODE = false;
+
     private static final String TAG = MainActivity.class.getSimpleName();
-    private final List<String> mBeaconToTrackList = new LinkedList<>();
+    private final List<TrackedBeacon> mBeaconToTrackList = new LinkedList<>();
     final private HashMap<String, ScannerEntry> mScanners = new HashMap<>();
-    private final HashMap<String, LatLng> mBeaconLocationResults = new HashMap<>();
+    private final HashMap<TrackedBeacon, LatLng> mBeaconLocationResults = new HashMap<>();
     private BluetoothScannerFragment mBluetoothScanner;
     private LocationRequest mLocationRequest = new LocationRequest().setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY).setInterval(5000);
     private GoogleApiClient mGoogleApiClient;
@@ -70,7 +75,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundHandlerThread;
     private DB mDb;
-    private Runnable mConnectToDatabaseTask = new Runnable() {
+    private Runnable mBackgroundInitializationTask = new Runnable() {
         @Override
         public void run() {
             Log.d(TAG, "Connecting to Database");
@@ -125,13 +130,13 @@ public class MainActivity extends FragmentActivity implements LocationListener,
     private Runnable mBeaconQueryingMainLoopTask = new Runnable() {
         @Override
         public void run() {
-            List<String> mBeacons = new LinkedList<>();
+            List<TrackedBeacon> mBeacons = new LinkedList<>();
             while (mBeaconLoopTaskRunning) {
                 synchronized (mBeaconToTrackList) {
                     mBeacons.clear();
                     mBeacons.addAll(mBeaconToTrackList);
                 }
-                for (String beacon : mBeacons) {
+                for (TrackedBeacon beacon : mBeacons) {
                     mBeaconRequestScheduler.submit(new BeaconRequestTask(beacon));
                     try {
                         Thread.sleep(100, 0);
@@ -158,7 +163,8 @@ public class MainActivity extends FragmentActivity implements LocationListener,
         mUiHandler = new Handler(Looper.getMainLooper());
         (mBackgroundHandlerThread = new HandlerThread("VigintillionBackgroundThread")).start();
         mBackgroundHandler = new Handler(mBackgroundHandlerThread.getLooper());
-        mBackgroundHandler.post(mConnectToDatabaseTask);
+        mBluetoothScanner = new BluetoothScannerFragment();
+        mBackgroundHandler.post(mBackgroundInitializationTask);
         // Get the list of beacons to search for from the database
         mDb = new DB(this);
         refreshBeaconList();
@@ -171,7 +177,6 @@ public class MainActivity extends FragmentActivity implements LocationListener,
                     .build();
         }
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        mBluetoothScanner = new BluetoothScannerFragment();
         mMapFragment = MapFragment.newInstance();
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragmentContainer, new LaunchFragment())
@@ -340,10 +345,10 @@ public class MainActivity extends FragmentActivity implements LocationListener,
         }
     }
 
-    public List<LatLng> getBeaconLocationCalculationResults() {
-        List<LatLng> results = new LinkedList<>();
+    public Map<TrackedBeacon,LatLng> getBeaconLocationCalculationResults() {
+        Map<TrackedBeacon,LatLng> results = new HashMap<>();
         synchronized (mBeaconLocationResults) {
-            results.addAll(mBeaconLocationResults.values());
+            results.putAll(mBeaconLocationResults);
         }
         return results;
     }
@@ -374,8 +379,8 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 
     // This class ask about a beacon to all nearby scanners and triangulate position if possible
     private class BeaconRequestTask implements Runnable {
-        private String mBeacon;
-        public BeaconRequestTask(String beacon) {
+        private TrackedBeacon mBeacon;
+        public BeaconRequestTask(TrackedBeacon beacon) {
             mBeacon = beacon;
         }
 

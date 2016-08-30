@@ -22,6 +22,7 @@ import br.inatel.hackathon.vigintillionlocalizer.adapters.BeaconsAdapter;
 import br.inatel.hackathon.vigintillionlocalizer.R;
 import br.inatel.hackathon.vigintillionlocalizer.activity.MainActivity;
 import br.inatel.hackathon.vigintillionlocalizer.database.DB;
+import br.inatel.hackathon.vigintillionlocalizer.model.TrackedBeacon;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -75,6 +76,7 @@ public class BeaconsToTrackFragment extends Fragment implements BeaconsAdapter.I
     public static final int RESULT_OK = 0;
     public static final int RESULT_CANCEL = -1;
     public static final String SELECTED_ITEM = "SelectedItem";
+    public static final String SELECTED_COLOR = "SelectedColor";
 
     void showAddNewDialog() {
         // DialogFragment.show() will take care of adding the fragment
@@ -104,10 +106,11 @@ public class BeaconsToTrackFragment extends Fragment implements BeaconsAdapter.I
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == ADD_NEW_BEACON && resultCode == RESULT_OK) {
-            String new_beacon = data.getStringExtra(SELECTED_ITEM);
-            mAdapter.getDataSet().add(new_beacon);
+            String new_beacon_name = data.getStringExtra(SELECTED_ITEM);
+            int new_beacon_color_id = data.getIntExtra(SELECTED_COLOR,0);
+            mAdapter.getDataSet().add(new TrackedBeacon(new_beacon_name,new_beacon_color_id));
             mAdapter.notifyDataSetChanged();
-            mDb.tracked_add(new_beacon);
+            mDb.tracked_add(new_beacon_name,new_beacon_color_id);
             ((MainActivity)getActivity()).refreshBeaconList();
         }
     }

@@ -20,9 +20,12 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import br.inatel.hackathon.vigintillionlocalizer.R;
 import br.inatel.hackathon.vigintillionlocalizer.activity.MainActivity;
+import br.inatel.hackathon.vigintillionlocalizer.adapters.BeaconsAdapter;
+import br.inatel.hackathon.vigintillionlocalizer.model.TrackedBeacon;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -109,13 +112,43 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                         .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.radiobutton_off_background)));
             }
             // found beacons
-            List<LatLng> beacon_locs = ((MainActivity)getActivity()).getBeaconLocationCalculationResults();
-            for (LatLng beacon_loc: beacon_locs)
-                googleMap.addMarker(new MarkerOptions().position(beacon_loc));
+            Map<TrackedBeacon,LatLng> beacons = ((MainActivity)getActivity()).getBeaconLocationCalculationResults();
+            for (Map.Entry<TrackedBeacon,LatLng> beacon: beacons.entrySet())
+                googleMap.addMarker(new MarkerOptions()
+                        .icon(BitmapDescriptorFactory.defaultMarker(colorIdToHue(beacon.getKey().color_id)))
+                        .position(beacon.getValue()));
+            if (MainActivity.TEST_MODE) {
+                final float d = 0.001f;
+                googleMap.addMarker(new MarkerOptions()
+                        .icon(BitmapDescriptorFactory.defaultMarker(colorIdToHue(0)))
+                        .position(new LatLng(me.latitude+d, me.longitude+d)));
+                googleMap.addMarker(new MarkerOptions()
+                        .icon(BitmapDescriptorFactory.defaultMarker(colorIdToHue(1)))
+                        .position(new LatLng(me.latitude-d, me.longitude+d)));
+                googleMap.addMarker(new MarkerOptions()
+                        .icon(BitmapDescriptorFactory.defaultMarker(colorIdToHue(2)))
+                        .position(new LatLng(me.latitude+d, me.longitude-d)));
+                googleMap.addMarker(new MarkerOptions()
+                        .icon(BitmapDescriptorFactory.defaultMarker(colorIdToHue(3)))
+                        .position(new LatLng(me.latitude-d, me.longitude-d)));
+                googleMap.addMarker(new MarkerOptions()
+                        .icon(BitmapDescriptorFactory.defaultMarker(colorIdToHue(4)))
+                        .position(new LatLng(me.latitude+d, me.longitude)));
+            }
             if (mInitialMapUpdate) {
                 googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(me, 16.8f));
                 mInitialMapUpdate = false;
             }
+        }
+    }
+
+    private static float colorIdToHue(int color_id) {
+        switch (color_id) {
+            case 1: return BitmapDescriptorFactory.HUE_GREEN;
+            case 2: return BitmapDescriptorFactory.HUE_AZURE;
+            case 3: return BitmapDescriptorFactory.HUE_YELLOW;
+            case 4: return BitmapDescriptorFactory.HUE_MAGENTA;
+            default: return BitmapDescriptorFactory.HUE_RED;
         }
     }
 

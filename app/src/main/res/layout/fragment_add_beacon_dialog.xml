@@ -19,48 +19,55 @@
         android:text="@string/select_a_color_caption" />
     <FrameLayout
         android:id="@id/selected_color"
-        android:elevation="12sp"
+        android:elevation="10sp"
+        android:background="@android:color/holo_red_light"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
+        android:layout_margin="5sp"
         android:layout_width="50sp"
-        android:layout_height="50sp"></FrameLayout>
+        android:layout_height="50sp"/>
     <LinearLayout
         android:id="@+id/color_picker_layout"
         android:layout_below="@id/select_color_caption"
         android:layout_width="match_parent"
         android:layout_height="60sp"
         android:orientation="horizontal">
-        <FrameLayout
+        <Button
             android:id="@+id/select_color_green"
             android:background="@android:color/holo_green_dark"
+            android:layout_margin="2sp"
             android:layout_width="0sp"
             android:layout_weight="0.2"
-            android:layout_height="match_parent"></FrameLayout>
-        <FrameLayout
+            android:layout_height="match_parent"/>
+        <Button
             android:id="@+id/select_color_red"
             android:background="@android:color/holo_red_light"
+            android:layout_margin="2sp"
             android:layout_width="0sp"
             android:layout_weight="0.2"
-            android:layout_height="match_parent"></FrameLayout>
-        <FrameLayout
+            android:layout_height="match_parent"/>
+        <Button
             android:id="@+id/select_color_blue"
             android:background="@android:color/holo_blue_dark"
+            android:layout_margin="2sp"
             android:layout_width="0sp"
             android:layout_weight="0.2"
-            android:layout_height="match_parent"></FrameLayout>
-        <FrameLayout
+            android:layout_height="match_parent"/>
+        <Button
             android:id="@+id/select_color_yellow"
             android:background="@android:color/holo_orange_light"
+            android:layout_margin="2sp"
             android:layout_width="0sp"
             android:layout_weight="0.2"
-            android:layout_height="match_parent"></FrameLayout>
-        <FrameLayout
+            android:layout_height="match_parent"/>
+        <Button
             android:id="@+id/select_color_purple"
             android:background="@android:color/holo_purple"
+            android:layout_margin="2sp"
             android:layout_width="0sp"
             android:layout_weight="0.2"
-            android:layout_height="match_parent"></FrameLayout>
+            android:layout_height="match_parent"/>
     </LinearLayout>
 
 
