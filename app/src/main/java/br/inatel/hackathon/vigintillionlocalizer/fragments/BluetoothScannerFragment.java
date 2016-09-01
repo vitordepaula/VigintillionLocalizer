@@ -44,6 +44,9 @@ import static com.mongodb.client.model.Filters.*;
  */
 public class BluetoothScannerFragment extends Fragment {
 
+    // TODO: enable self reporting
+    private static final boolean ENABLE_SELF_REPORTING = false;
+
     private static final int REQUEST_ENABLE_BT = 1;
     private static final String TAG = BluetoothScannerFragment.class.getSimpleName();
 
@@ -176,7 +179,8 @@ public class BluetoothScannerFragment extends Fragment {
         }
         Log.d(TAG, "updating remote database");
         mLastLocation = location;
-        updateMongoWebService();
+        if (ENABLE_SELF_REPORTING)
+            updateMongoWebService();
         return true;
     }
 
@@ -232,8 +236,7 @@ public class BluetoothScannerFragment extends Fragment {
         else{
             btLeScanner = mBtAdapter.getBluetoothLeScanner();
             btLeScanner.startScan(SCAN_FILTERS, SCAN_SETTINGS, scanCallback);
-            //TODO: uncomment line below to enable self-reporting
-            //((MainActivity)getActivity()).postToBackgroundHandler(mStartWebServerTask);
+            ((MainActivity)getActivity()).postToBackgroundHandler(mStartWebServerTask);
         }
     }
 
