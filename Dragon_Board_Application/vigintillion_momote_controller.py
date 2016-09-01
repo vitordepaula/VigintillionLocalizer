@@ -49,17 +49,19 @@ def MakeHandlerClass(idx):
 			if None != re.search('/beacon/*', self.path):
 				beaconID = self.path.split('=')[-1]
 				print('beaconID = ' + beaconID)
-				if sensorData[self.idx].has_key(beaconID):
-					self.send_response(200)
-					self.send_header('Content-Type', 'application/json')
-					self.end_headers()
-					self.wfile.write(sensorData[self.idx])
+				for entry in sensorData[self.idx]:
+					if entry['id'] == beaconID:
+						self.send_response(200)
+						self.send_header('Content-Type', 'application/json')
+						self.end_headers()
+						self.wfile.write(entry)
+						break
 				else:
 					self.send_response(404)
 					self.send_header('Content-Type', 'application/json')
 					self.end_headers()
 			else:
-				self.send_response(404, 'Not found: record does not exist')
+				self.send_response(404)
 				self.send_header('Content-Type', 'application/json')
 				self.end_headers()
 			return
@@ -81,7 +83,7 @@ class Agent():
 
     def startGetRequestCoap(self):
 		l = task.LoopingCall(self.requestGetResource)
-		l.start(3)
+		l.start(6)
 
     def requestGetResource(self):
 		print('Request CoAP GET')
@@ -107,11 +109,15 @@ class Agent():
 			#d.addCallback(self.printPutResponse)		
 
     def processGetResponse(self, response):
-        print 'Result: ' + response.payload
-        sensorData[currentIp] = response.payload
-	for entry in sensorData[currentIp]:
-		entry["loc"] = MAP_LOC[currentIp]
-        print 'Processed for IP ' + currentIp + ': ' + sensorData[currentIp]
+        print 'Result: ' + str(response.payload)
+	jsonData = json.loads(response.payload)
+	newData = []
+	for i in xrange(0,len(jsonData)):
+		entry = jsonData[i]
+		entry['loc'] = MAP_LOC[currentIp]
+		newData.append(entry)
+	sensorData[currentIp] = newData
+        print 'Updated for IP ' + currentIp + ': ' + repr(sensorData[currentIp])
         #reactor.stop()
 
     def printLaterResponse(self, response):
@@ -160,7 +166,6 @@ def startCoapListen():
 	reactor.run()
 
 if __name__ == '__main__':
-	print(len(ips))
 	for x in ips:
 		currentIp = x
 		mongoClientUpdate(scannerToJSON(MAP_LOC[x], x, MAP_PORT[x]))
