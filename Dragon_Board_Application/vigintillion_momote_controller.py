@@ -4,8 +4,7 @@ import sys
 from pymongo import MongoClient
 from uuid import getnode as get_mac
 from geojson import Point
-import json
-import geocoder
+import simplejson as json
 import socket
 import SimpleHTTPServer
 import SocketServer
@@ -34,7 +33,7 @@ payload = ''
 
 ips = ['aaaa::212:4b00:804:d603', 'aaaa::212:4b00:804:d383', 'aaaa::212:4b00:804:e084']
 MAP_PORT = { ips[0]: 9001, ips[1]:9002, ips[2]:9003 }
-MAP_LOC = { ips[0]: Point((-22.8305, -43.2192)), ips[1]: Point((-22.8305, -43.2202)), ips[2]: Point((-22.8315, -43.2192)) }
+MAP_LOC = { ips[0]: Point((-45.697433,-22.257162)), ips[1]: Point((-45.697333,-22.256862)), ips[2]: Point((-45.696833,-22.257462)) }
 sensorData = { ips[0]: [], ips[1]: [], ips[2]: [] }
 
 ROUTES = [('/', '/id')]
@@ -54,7 +53,7 @@ def MakeHandlerClass(idx):
 						self.send_response(200)
 						self.send_header('Content-Type', 'application/json')
 						self.end_headers()
-						self.wfile.write(entry)
+						self.wfile.write(json.dumps(entry))
 						break
 				else:
 					self.send_response(404)
@@ -134,11 +133,11 @@ class Agent():
 		#print response.payload
         
  
-def createHTTPServer(ip, port):
+def createHTTPServer(id, ip, port):
 	print(port)
 	#server = ThreadingSimpleServer((ip,port), Handler)
 	#server.handle_request()
-	server = SocketServer.TCPServer((ip, port), MakeHandlerClass(port))
+	server = SocketServer.TCPServer((ip, port), MakeHandlerClass(id))
 	thread = threading.Thread(target=server.serve_forever)
 	thread.start()
 	#httpd = SocketServer.TCPServer((ip, port), Handler)
@@ -170,5 +169,5 @@ if __name__ == '__main__':
 		currentIp = x
 		mongoClientUpdate(scannerToJSON(MAP_LOC[x], x, MAP_PORT[x]))
 		print('momote IP: ' + x)
-		createHTTPServer('', MAP_PORT[x])
+		createHTTPServer(x, '', MAP_PORT[x])
 	startCoapListen()
