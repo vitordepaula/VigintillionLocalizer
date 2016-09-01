@@ -302,6 +302,9 @@ public class MainActivity extends FragmentActivity implements LocationListener,
 
     @Override
     public void onLocationChanged(Location location) {
+        float acc = location.hasAccuracy() ? location.getAccuracy() : 999.0f;
+        Log.d(TAG, "LOCATION: (" + location.getLatitude() + "," + location.getLongitude() + "), acc=" + acc);
+        if (acc > 50.0) return; // discard bad values
         if (mLaunchScreenShowing)
             closeLaunchScreen();
         // only updates the scanner location if we have moved at least 15 meters
@@ -397,7 +400,8 @@ public class MainActivity extends FragmentActivity implements LocationListener,
             }
             for (ScannerEntry scanner : mScannersToAsk) {
                 try {
-                    URL url = new URL("http://" + scanner.getAddress() + ":" + scanner.getPort() + "/beacon?id=" + mBeacon);
+                    Log.d(TAG, "Looking for Dev " + mBeacon.beacon_id);
+                    URL url = new URL("http://" + scanner.getAddress() + ":" + scanner.getPort() + "/beacon?id=" + mBeacon.beacon_id);
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     // TODO: set accepted content type as json
                     conn.setReadTimeout(2000 /* milliseconds */);
@@ -413,7 +417,7 @@ public class MainActivity extends FragmentActivity implements LocationListener,
                         InputStream is = conn.getInputStream();
                         int len = is.read(buf);
                         String json_string = new String(buf, 0, len, "UTF-8");
-                        //Log.d(TAG, "Dev " + mBeacon + ": from " + scanner.getAddress() + ":" + scanner.getPort() + "->" + json_string);
+                        Log.d(TAG, "Dev " + mBeacon.beacon_id + ": from " + scanner.getAddress() + ":" + scanner.getPort() + "->" + json_string);
                         // Then to JSON
                         try {
                             JSONObject obj = new JSONObject(json_string);
@@ -442,10 +446,10 @@ public class MainActivity extends FragmentActivity implements LocationListener,
                         conn.disconnect();
                     }
                 } catch (IOException e) {
-                    Log.d(TAG, "Beacon " + mBeacon + ": Error talking to " + scanner.getAddress() + " at port " + scanner.getPort());
+                    Log.d(TAG, "Dev " + mBeacon.beacon_id + ": Error talking to " + scanner.getAddress() + " at port " + scanner.getPort());
                 }
             }
-            Log.d(TAG, "Dev " + mBeacon + " acc " + acc_weight + ", pos_m " + mean_lat + "," + mean_lon);
+            Log.d(TAG, "Dev " + mBeacon.beacon_id + " acc " + acc_weight + ", pos_m " + mean_lat + "," + mean_lon);
             synchronized (mBeaconLocationResults) {
                 if (acc_weight == 0)
                     mBeaconLocationResults.remove(mBeacon);

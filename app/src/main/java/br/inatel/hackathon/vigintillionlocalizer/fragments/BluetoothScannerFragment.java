@@ -232,7 +232,8 @@ public class BluetoothScannerFragment extends Fragment {
         else{
             btLeScanner = mBtAdapter.getBluetoothLeScanner();
             btLeScanner.startScan(SCAN_FILTERS, SCAN_SETTINGS, scanCallback);
-            ((MainActivity)getActivity()).postToBackgroundHandler(mStartWebServerTask);
+            //TODO: uncomment line below to enable self-reporting
+            //((MainActivity)getActivity()).postToBackgroundHandler(mStartWebServerTask);
         }
     }
 
