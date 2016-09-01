@@ -419,8 +419,9 @@ public class MainActivity extends FragmentActivity implements LocationListener,
                             JSONObject obj = new JSONObject(json_string);
                             long timestamp = obj.getLong("timestamp");
                             long delay = System.currentTimeMillis() - timestamp;
-                            float lat = (float) obj.getDouble("lat");
-                            float lon = (float) obj.getDouble("lon");
+                            JSONArray loc = obj.getJSONObject("loc").getJSONArray("coordinates"); // GeoJSON
+                            float lat = (float) loc.getDouble(1);
+                            float lon = (float) loc.getDouble(0);
                             int signal;
                             try {
                                 signal = obj.getInt("signal");

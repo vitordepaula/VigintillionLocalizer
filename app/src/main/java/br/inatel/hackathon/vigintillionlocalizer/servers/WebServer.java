@@ -6,6 +6,7 @@ package br.inatel.hackathon.vigintillionlocalizer.servers;
 
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -63,9 +64,13 @@ public class WebServer extends NanoHTTPD {
                             "text/plain", "Not found.");
                 }
                 String answer = new JSONObject()
+                        .put("id",id)
                         .put("timestamp", beacon.getTimestamp())
-                        .put("lat", beacon.getLocation().latitude)
-                        .put("lon", beacon.getLocation().longitude)
+                        .put("loc", new JSONObject()
+                                .put("type", "Point")
+                                .put("coordinates", new JSONArray()
+                                        .put(beacon.getLocation().longitude)
+                                        .put(beacon.getLocation().latitude)))
                         .put("signal", beacon.getRssi())
                         .toString();
                 //Log.d(TAG, "Replying to query of tag " + id + ": " + answer);
